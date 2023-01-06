@@ -13,7 +13,8 @@ import {
 import { InternalRoomEvents, OutgoingRoomEvents } from './events';
 import { instanceToPlain } from 'class-transformer';
 import { ROOM_ERROR, ROOM_ERRORS } from './room.errors';
-import { OwnerParam, Owner, ValidateOwner } from './decorators/room';
+import { NotRoomOwnerError } from './NotRoomOwnerError';
+import { GameInProgressError } from './GameInProgressError';
 
 export type IncomingGameEvent =
   | GameEvents.PLAYER_CARD_PLAYED
@@ -30,7 +31,6 @@ export class Room {
   public readonly id = v4();
   private server: Server;
   public players = new Set<User>();
-  @Owner
   public owner: User;
   private readonly cardService = new CardService();
   // TODO: Refactor to GameConfig that implements IGameConfig and generates default config within with methods to manipulate the config
@@ -81,14 +81,14 @@ export class Room {
     return !!this.game;
   }
 
-  @ValidateOwner
-  public startGame(@OwnerParam user: User): void {
+  public startGame(user: User): void {
+    if (user !== this.owner) {
+      throw new NotRoomOwnerError();
+    }
+
     // TODO: If fewer than min players emit error
     if (this.game) {
-      this.server.to(this.id).emit(ROOM_ERROR, {
-        message: ROOM_ERRORS.GAME_IN_PROGRESS_ERROR,
-      });
-      return;
+      throw new GameInProgressError();
     }
 
     this.game = new Game(

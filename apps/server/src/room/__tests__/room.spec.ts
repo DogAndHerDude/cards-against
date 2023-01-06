@@ -2,6 +2,7 @@ import { User } from '@/user/User';
 import { instanceToPlain } from 'class-transformer';
 import { Server, Socket } from 'socket.io';
 import { InternalRoomEvents, OutgoingRoomEvents } from '../events';
+import { NotRoomOwnerError } from '../NotRoomOwnerError';
 import { Room } from '../room';
 import { ROOM_ERROR, ROOM_ERRORS } from '../room.errors';
 
@@ -172,7 +173,7 @@ describe('Room', () => {
       expect(room['game'].on).toHaveBeenCalledTimes(9);
     });
 
-    it.only('Should emit error when user starting game is not owner', () => {
+    it('Should throw error when user starting game is not owner', () => {
       const server = mockSocketServerBuilder();
       const playerSocket = mockSocketBuilder();
       const ownerSocket = mockSocketBuilder();
@@ -184,12 +185,7 @@ describe('Room', () => {
 
       const room = new Room(owner, server);
 
-      room.startGame(player);
-
-      expect(server.to).toHaveBeenCalledWith(room.id);
-      expect(server.emit).toHaveBeenCalledWith(ROOM_ERROR, {
-        message: ROOM_ERRORS.NOT_OWNER_ERROR,
-      });
+      expect(() => room.startGame(player)).toThrowError(NotRoomOwnerError);
     });
     it.todo('Should throw error when game is already in progress');
   });

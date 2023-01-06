@@ -8,11 +8,10 @@ import {
   WebSocketGateway,
   WebSocketServer,
 } from '@nestjs/websockets';
-import { SocketGatewayConnectionEvents } from './gateway.events';
-import { SocketGatewayErrors } from './gateway.errors';
+import { JsonWebTokenError } from 'jsonwebtoken';
+import { SOCKET_GATEWAY_ERRORS } from './gateway.errors';
 import { UserService } from '@/user/user.service';
 import { AuthService } from '@/auth/auth.service';
-import { UserExistsError } from '@/user/errors/UserExistsError';
 import { RoomService } from '@/room/room.service';
 import { AuthorizedSocket } from './AuthorizedSocket';
 import { IncomingRoomEvents } from '@/room/events';
@@ -24,8 +23,10 @@ import { WsInternalServerErrorException } from './errors/WsInternalServerErrorEx
 import { GameEventDTO } from './dto/GameEventDTO';
 import { RoomNotFoundError } from '@/room/RoomNotFoundError';
 import { WsRoomNotFoundException } from './errors/WsRoomNotFoundException';
+import { UseGuards } from '@nestjs/common';
+import { SocketAuthGuard } from '@/guards/auth.guard';
 
-@WebSocketGateway({ transports: ['websocket'] })
+@WebSocketGateway()
 export class SocketGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer()
   public server!: Server;
@@ -37,66 +38,68 @@ export class SocketGateway implements OnGatewayConnection, OnGatewayDisconnect {
   ) {}
 
   public async handleConnection(socket: Socket): Promise<void> {
-    if (!socket.handshake.query.name) {
-      socket.emit(SocketGatewayConnectionEvents.ERROR, {
-        status: 'error',
-        message: SocketGatewayErrors.USER_NAME_REQUIRED_ERROR,
-      });
+    const { auth } = socket.handshake;
+
+    if (!auth?.token) {
+      socket.emit(SOCKET_GATEWAY_ERRORS.UNAUTHENTICATED);
       socket.disconnect(true);
       return;
     }
 
     try {
-      const user = this.userService.createUser(
-        socket.handshake.query.name as string,
-        socket,
-      );
+      const userData = await this.authService.verifyJWT(auth.token);
+      const user = this.userService.getUser(userData.id);
 
-      socket.handshake.auth.token = this.authService.generateJWT(user.id);
-
-      // TODO: Emit Authenticated event
+      user.setSocket(socket);
     } catch (error) {
-      if (error instanceof UserExistsError) {
-        socket.emit(SocketGatewayConnectionEvents.ERROR, {
-          status: 'error',
-          message: SocketGatewayErrors.USER_NAME_TAKEN_ERROR,
-        });
+      if (error instanceof UserNotFoundError) {
+        socket.emit(SOCKET_GATEWAY_ERRORS.INVALID_CREDENTIALS);
         socket.disconnect(true);
         return;
       }
 
-      socket.emit(SocketGatewayConnectionEvents.ERROR, {
-        status: 'error',
-        message: SocketGatewayErrors.INTERNAL_SERVER_ERROR,
-      });
+      if (error instanceof JsonWebTokenError) {
+        socket.emit(SOCKET_GATEWAY_ERRORS.UNAUTHORIZED);
+        socket.disconnect(true);
+        return;
+      }
+
+      socket.emit(SOCKET_GATEWAY_ERRORS.INTERNAL_SERVER_ERROR);
       socket.disconnect(true);
     }
   }
 
-  public handleDisconnect(client: Socket): void {
-    if (client.handshake.auth.token) {
+  public async handleDisconnect(socket: Socket) {
+    if (socket.handshake.auth.token) {
       try {
-        // 1. decode token
-        // 2. find user and remove from session
+        const { auth } = socket.handshake;
+        const userData = await this.authService.verifyJWT(auth.token);
+
+        this.userService.removeUser(userData.id);
       } catch {}
     }
   }
 
   @SubscribeMessage(IncomingRoomEvents.LIST_ROOMS)
-  public handleListRooms() {
+  @UseGuards(SocketAuthGuard)
+  public listRooms() {
     return this.roomService.listRooms();
   }
 
-  @SubscribeMessage(IncomingRoomEvents.MESSAGE)
-  public handleIncomingMessage(
-    @ConnectedSocket() socket: AuthorizedSocket,
-    @MessageBody() data: MessageDTO,
-  ): void {
+  @SubscribeMessage(IncomingRoomEvents.CREATE_ROOM)
+  @UseGuards(SocketAuthGuard)
+  public createRoom(@ConnectedSocket() socket: AuthorizedSocket) {
     try {
       const user = this.userService.getUser(socket.user.id);
-      const room = this.roomService.getRoom(data.roomID);
+      const room = this.roomService.createRoom(user, this.server);
 
-      room.messageRoom(user, data.message);
+      // TODO: Refactor to getRoomDetails
+      // TODO: Emit game config as well
+      return {
+        id: room.id,
+        players: room.players.size,
+        gameInProgress: false,
+      };
     } catch (error) {
       if (error instanceof UserNotFoundError) {
         throw new WsUserNotFoundException();
@@ -110,7 +113,20 @@ export class SocketGateway implements OnGatewayConnection, OnGatewayDisconnect {
     }
   }
 
+  @SubscribeMessage(IncomingRoomEvents.JOIN_ROOM)
+  @UseGuards(SocketAuthGuard)
+  public joinRoom() {
+    //
+  }
+
+  @SubscribeMessage(IncomingRoomEvents.LEAVE_ROOM)
+  @UseGuards(SocketAuthGuard)
+  public leaveRoom() {
+    //
+  }
+
   @SubscribeMessage(IncomingRoomEvents.GAME_EVENT)
+  @UseGuards(SocketAuthGuard)
   public handleGameEvent(
     @ConnectedSocket() socket: AuthorizedSocket,
     @MessageBody() data: GameEventDTO,
@@ -118,6 +134,9 @@ export class SocketGateway implements OnGatewayConnection, OnGatewayDisconnect {
     try {
       const user = this.userService.getUser(socket.user.id);
       const room = this.roomService.getRoom(data.roomID);
+
+      // TODO: Should validate whether the user is in a room, because now you can send it to any room you wish
+      // TODO: Probably best to validate that inside of a guard
 
       room.handleIncomingGameEvent(user, {
         event: data.event,
@@ -147,6 +166,8 @@ export class SocketGateway implements OnGatewayConnection, OnGatewayDisconnect {
       // TODO: refactor getUser to throw error and just handle it all in a catch block
       const user = this.userService.getUser(socket.user.id);
       const room = this.roomService.getRoom(data.roomID);
+
+      // TODO: Validate if game is in progress
 
       room.startGame(user);
     } catch (error) {

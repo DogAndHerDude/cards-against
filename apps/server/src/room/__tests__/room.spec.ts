@@ -1,7 +1,15 @@
 import { User } from '@/user/User';
+import { instanceToPlain } from 'class-transformer';
 import { Server, Socket } from 'socket.io';
 import { InternalRoomEvents, OutgoingRoomEvents } from '../events';
 import { Room } from '../room';
+
+jest.mock('@cards-against/game/Game', () => ({
+  Game: jest.fn(() => ({
+    startRound: jest.fn(),
+    on: jest.fn(),
+  })),
+}));
 
 describe('Room', () => {
   const mockSocketBuilder = () => {
@@ -23,7 +31,10 @@ describe('Room', () => {
     it('should instantiate and adds owner to players', () => {
       const server = mockSocketServerBuilder();
       const socket = mockSocketBuilder();
-      const owner = new User('name', socket);
+      const owner = new User('name');
+
+      owner.setSocket(socket);
+
       const room = new Room(owner, server);
 
       expect(room).toBeDefined();
@@ -35,18 +46,22 @@ describe('Room', () => {
   describe('addUser', () => {
     it('should add a new unique user and have it join room', () => {
       const server = mockSocketServerBuilder();
+      const ownerSocket = mockSocketBuilder();
       const playerSocket = mockSocketBuilder();
-      const owner = new User('owner', mockSocketBuilder());
-      const player = new User('player', playerSocket);
+      const owner = new User('owner');
+      const player = new User('player');
+
+      owner.setSocket(ownerSocket);
+      player.setSocket(playerSocket);
+
       const room = new Room(owner, server);
 
-      room.addUser(player);
-
+      room.addUser(player as Required<User>);
       expect(room.players.has(player)).toBeTruthy();
       expect(playerSocket.join).toHaveBeenCalledWith(room.id);
       expect(server.to).toHaveBeenCalledWith(room.id);
       expect(server.emit).toHaveBeenCalledWith(OutgoingRoomEvents.USER_JOINED, {
-        user: player.toPlain(),
+        user: instanceToPlain(player),
       });
     });
   });
@@ -55,27 +70,35 @@ describe('Room', () => {
     it('should remove an existing player if user is player', () => {
       const server = mockSocketServerBuilder();
       const playerSocket = mockSocketBuilder();
-      const owner = new User('owner', mockSocketBuilder());
-      const player = new User('player', playerSocket);
+      const ownerSocket = mockSocketBuilder();
+      const owner = new User('owner');
+      const player = new User('player');
+
+      owner.setSocket(ownerSocket);
+      player.setSocket(playerSocket);
+
       const room = new Room(owner, server);
 
-      room.addUser(player);
+      room.addUser(player as Required<User>);
       room.removeUser(player);
-
       expect(room.owner).toEqual(owner);
       expect(room.players.has(player)).toBeFalsy();
       expect(server.to).toHaveBeenCalledWith(room.id);
       expect(server.emit).toHaveBeenLastCalledWith(
         OutgoingRoomEvents.USER_LEFT,
         {
-          user: player.id,
+          userId: player.id,
         },
       );
     });
 
     it('Should remove user from the list of players and emit event if last user', () => {
       const server = mockSocketServerBuilder();
-      const owner = new User('owner', mockSocketBuilder());
+      const socket = mockSocketBuilder();
+      const owner = new User('owner');
+
+      owner.setSocket(socket);
+
       const room = new Room(owner, server);
       const eventCb = jest.fn();
 
@@ -89,33 +112,73 @@ describe('Room', () => {
     it('Should select a new owner when the owner leaves', () => {
       const server = mockSocketServerBuilder();
       const playerSocket = mockSocketBuilder();
-      const owner = new User('owner', mockSocketBuilder());
-      const player = new User('player', playerSocket);
+      const ownerSocket = mockSocketBuilder();
+      const owner = new User('owner');
+      const player = new User('player');
+
+      owner.setSocket(ownerSocket);
+      player.setSocket(playerSocket);
+
       const room = new Room(owner, server);
 
-      room.addUser(player);
+      room.addUser(player as Required<User>);
       room.removeUser(owner);
 
       expect(room.owner).toEqual(player);
     });
 
-    it.todo('Should remove an existing spectator if user is spectator');
+    it.todo('Emits game ended when fewer than min required players');
   });
 
   describe('isGameInProgress', () => {
-    it.todo('should return true|false whether the game is present');
+    it.each([[true], [false]])(
+      'Returns true|false whether the game is present',
+      (exists) => {
+        const server = mockSocketServerBuilder();
+        const socket = mockSocketBuilder();
+        const owner = new User('owner');
+
+        owner.setSocket(socket);
+
+        const room = new Room(owner, server);
+
+        if (exists) {
+          room['game'] = {} as any;
+        }
+
+        expect(room.isGameInProgress()).toBe(exists);
+      },
+    );
   });
 
   describe('startGame', () => {
-    it.todo('Should create new Game instance when no game is in progress');
+    it('Should create new Game instance when no game is in progress', () => {
+      const server = mockSocketServerBuilder();
+      const playerSocket = mockSocketBuilder();
+      const ownerSocket = mockSocketBuilder();
+      const owner = new User('owner');
+      const player = new User('player');
+
+      owner.setSocket(ownerSocket);
+      player.setSocket(playerSocket);
+
+      const room = new Room(owner, server);
+
+      room.startGame(owner);
+
+      expect(room['game']).toBeDefined();
+      expect(room['game'].startRound).toHaveBeenCalled();
+      expect(room['game'].on).toHaveBeenCalledTimes(9);
+    });
+
     it.todo('Should handle and emit outgoing game events');
-    it.todo('Should throw error when user starting game is not owner');
+    it.todo('Should emit when user starting game is not owner');
     it.todo('Should throw error when game is already in progress');
   });
 
   describe('handleIncomingGameEvent', () => {
     it.todo('Should throw an error when no game is in progress');
-    it.todo('Should match passed even with related game method');
+    it.todo('Should match passed event with related game method');
     it.todo(
       'Shoud throw an error when the event does not match possible events',
     );

@@ -1,5 +1,4 @@
 import { Injectable } from '@nestjs/common';
-import { Socket } from 'socket.io';
 import { UserExistsError } from './errors/UserExistsError';
 import { UserNotFoundError } from './errors/UserNotFoundError';
 import { User } from './User';
@@ -8,12 +7,12 @@ import { User } from './User';
 export class UserService {
   private users = new Map<string, User>();
 
-  public createUser(name: string, socket: Socket) {
+  public createUser(name: string) {
     if (this.userExists(name)) {
       throw new UserExistsError(name);
     }
 
-    const user = new User(name, socket);
+    const user = new User(name);
 
     this.users.set(user.id, user);
 

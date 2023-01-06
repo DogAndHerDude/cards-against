@@ -2,13 +2,12 @@ import { Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 
 export type JWTPayload = { id: string };
-
 @Injectable()
 export class AuthService {
   constructor(private readonly jwtService: JwtService) {}
 
-  public generateJWT(id: string): string {
-    return this.jwtService.sign({
+  public async generateJWT(id: string) {
+    return await this.jwtService.signAsync({
       id,
     });
   }

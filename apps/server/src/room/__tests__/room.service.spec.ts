@@ -9,10 +9,8 @@ describe('RoomService', () => {
       providers: [RoomService],
     }).compile();
 
-    service = module.get<RoomService>(RoomService);
+    service = module.get(RoomService);
   });
 
-  it('should be defined', () => {
-    expect(service).toBeDefined();
-  });
+  describe('createRoom', () => {});
 });

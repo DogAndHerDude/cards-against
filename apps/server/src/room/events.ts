@@ -7,7 +7,9 @@ export enum OutgoingRoomEvents {
 }
 
 export enum IncomingRoomEvents {
+  CREATE_ROOM = 'CREATE_ROOM',
   JOIN_ROOM = 'JOIN_ROOM',
+  LEAVE_ROOM = 'LEAVE_ROOM',
   LIST_ROOMS = 'LIST_ROOMS',
   START_GAME = 'START_GAME',
   GAME_EVENT = 'GAME_EVENT',

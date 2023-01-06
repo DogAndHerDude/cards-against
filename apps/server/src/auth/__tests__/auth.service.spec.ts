@@ -15,8 +15,8 @@ describe('AuthService', () => {
   });
 
   describe('generateJWT', () => {
-    it('Should generate a jwt with given arguments', () => {
-      const token = authService.generateJWT('my-id');
+    it('Should generate a jwt with given arguments', async () => {
+      const token = await authService.generateJWT('my-id');
 
       expect(token).toStrictEqual(expect.any(String));
     });
@@ -25,7 +25,7 @@ describe('AuthService', () => {
   describe('verifyJwt', () => {
     it('It should verify the JWT given valid arguments', async () => {
       const id = 'my-id';
-      const token = authService.generateJWT(id);
+      const token = await authService.generateJWT(id);
 
       await expect(authService.verifyJWT(token)).resolves.toStrictEqual(
         expect.objectContaining({ id }),

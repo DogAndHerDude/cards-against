@@ -1,20 +1,17 @@
+import { Exclude } from 'class-transformer';
 import { Socket } from 'socket.io';
 import { v4 } from 'uuid';
-
-export type PlainUser = {
-  id: string;
-  name: string;
-};
 
 export class User {
   public readonly id = v4();
 
-  constructor(public readonly name: string, public readonly socket: Socket) {}
+  @Exclude({ toPlainOnly: true })
+  public socket?: Socket;
 
-  toPlain(): PlainUser {
-    return {
-      id: this.id,
-      name: this.name,
-    };
+  constructor(public readonly name: string) {}
+
+  @Exclude({ toPlainOnly: true })
+  public setSocket(socket: Socket) {
+    this.socket = socket;
   }
 }

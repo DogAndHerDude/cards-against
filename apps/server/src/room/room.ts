@@ -11,6 +11,7 @@ import {
   Player,
 } from '@cards-against/game';
 import { InternalRoomEvents, OutgoingRoomEvents } from './events';
+import { instanceToPlain } from 'class-transformer';
 
 export type IncomingGameEvent =
   | GameEvents.PLAYER_CARD_PLAYED
@@ -26,10 +27,8 @@ export type IncomingGameEventPayload = {
 export class Room {
   public readonly id = v4();
   public players = new Set<User>();
-  public spectators = new Set<User>();
-  // TODO: Refactor to GameConfig that implements IGameConfig and generates default config within
-  //       with methods to manipulate the config
   private readonly cardService = new CardService();
+  // TODO: Refactor to GameConfig that implements IGameConfig and generates default config within with methods to manipulate the config
   private gameConfig = new DefaultGameConfig();
   private game?: Game;
   private emitter = new EventEmitter();
@@ -46,39 +45,27 @@ export class Room {
 
   public addUser(user: Required<User>): void {
     this.players.add(user);
-
     user.socket.join(this.id);
-
     this.server.to(this.id).emit(OutgoingRoomEvents.USER_JOINED, {
-      user: user.toPlain(),
+      user: instanceToPlain(user),
     });
   }
 
   public removeUser(user: User): void {
     this.players.delete(user);
-    this.spectators.delete(user);
 
-    if (this.players.size) {
-      this.owner = Array.from(this.players.entries())[0][0];
+    // TODO: If fewer than min required players then stop game and emit game ended event
+
+    if (this.players.size && user === this.owner) {
+      this.owner = Array.from(this.players.values())[0];
     }
 
     if (!this.players.size) {
       this.emitter.emit(InternalRoomEvents.ROOM_CLOSED);
     }
 
-    // TODO: if user is owner, pass ownership to next player
-    // TODO: if no players left, emit close room
-
     this.server.to(this.id).emit(OutgoingRoomEvents.USER_LEFT, {
-      user: user.id,
-    });
-  }
-
-  // TODO: Re-implement and test
-  public messageRoom(user: User, message: string): void {
-    this.server.to(this.id).emit(OutgoingRoomEvents.MESSAGE, {
-      from: user.id,
-      message,
+      userId: user.id,
     });
   }
 
@@ -87,6 +74,7 @@ export class Room {
   }
 
   public startGame(user: User): void {
+    // TODO: If fewer than min players emit error
     if (this.game) {
       // TODO: Emit error that game already started
       return;
@@ -94,6 +82,7 @@ export class Room {
 
     if (user.id !== this.owner.id) {
       // TODO: Emit error that user is not the owner
+      //       Or wrap it in a guard decorator
       return;
     }
 
@@ -138,7 +127,7 @@ export class Room {
     }
 
     this.game.on(GameEvents.GAME_STARTED, () =>
-      this.server.in(this.id).emit(GameEvents.GAME_STARTED),
+      this.server.to(this.id).emit(GameEvents.GAME_STARTED),
     );
     this.game.on(GameEvents.HAND_OUT_CARDS, (data) =>
       Object.entries(data).forEach(([userID, whiteCards]) => {

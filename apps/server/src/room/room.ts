@@ -12,6 +12,8 @@ import {
 } from '@cards-against/game';
 import { InternalRoomEvents, OutgoingRoomEvents } from './events';
 import { instanceToPlain } from 'class-transformer';
+import { ROOM_ERROR, ROOM_ERRORS } from './room.errors';
+import { OwnerParam, Owner, ValidateOwner } from './decorators/room';
 
 export type IncomingGameEvent =
   | GameEvents.PLAYER_CARD_PLAYED
@@ -26,7 +28,10 @@ export type IncomingGameEventPayload = {
 
 export class Room {
   public readonly id = v4();
+  private server: Server;
   public players = new Set<User>();
+  @Owner
+  public owner: User;
   private readonly cardService = new CardService();
   // TODO: Refactor to GameConfig that implements IGameConfig and generates default config within with methods to manipulate the config
   private gameConfig = new DefaultGameConfig();
@@ -34,7 +39,10 @@ export class Room {
   private emitter = new EventEmitter();
 
   // TODO: Allow users to switch between spectators and players before the game starts
-  constructor(public owner: User, private readonly server: Server) {
+  constructor(owner: User, server: Server) {
+    this.owner = owner;
+    this.server = server;
+
     this.players.add(owner);
     owner.socket.join(this.id);
   }
@@ -73,16 +81,13 @@ export class Room {
     return !!this.game;
   }
 
-  public startGame(user: User): void {
+  @ValidateOwner
+  public startGame(@OwnerParam user: User): void {
     // TODO: If fewer than min players emit error
     if (this.game) {
-      // TODO: Emit error that game already started
-      return;
-    }
-
-    if (user.id !== this.owner.id) {
-      // TODO: Emit error that user is not the owner
-      //       Or wrap it in a guard decorator
+      this.server.to(this.id).emit(ROOM_ERROR, {
+        message: ROOM_ERRORS.GAME_IN_PROGRESS_ERROR,
+      });
       return;
     }
 
@@ -104,7 +109,7 @@ export class Room {
     { event, data }: IncomingGameEventPayload,
   ): void {
     if (!this.game) {
-      // TODO: Emit an error to the user
+      // TODO: Throw error to upper scope
       return;
     }
 

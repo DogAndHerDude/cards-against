@@ -3,6 +3,7 @@ import { instanceToPlain } from 'class-transformer';
 import { Server, Socket } from 'socket.io';
 import { InternalRoomEvents, OutgoingRoomEvents } from '../events';
 import { Room } from '../room';
+import { ROOM_ERROR, ROOM_ERRORS } from '../room.errors';
 
 jest.mock('@cards-against/game/Game', () => ({
   Game: jest.fn(() => ({
@@ -171,8 +172,25 @@ describe('Room', () => {
       expect(room['game'].on).toHaveBeenCalledTimes(9);
     });
 
-    it.todo('Should handle and emit outgoing game events');
-    it.todo('Should emit when user starting game is not owner');
+    it.only('Should emit error when user starting game is not owner', () => {
+      const server = mockSocketServerBuilder();
+      const playerSocket = mockSocketBuilder();
+      const ownerSocket = mockSocketBuilder();
+      const owner = new User('owner');
+      const player = new User('player');
+
+      owner.setSocket(ownerSocket);
+      player.setSocket(playerSocket);
+
+      const room = new Room(owner, server);
+
+      room.startGame(player);
+
+      expect(server.to).toHaveBeenCalledWith(room.id);
+      expect(server.emit).toHaveBeenCalledWith(ROOM_ERROR, {
+        message: ROOM_ERRORS.NOT_OWNER_ERROR,
+      });
+    });
     it.todo('Should throw error when game is already in progress');
   });
 

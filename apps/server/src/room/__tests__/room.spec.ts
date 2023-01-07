@@ -1,14 +1,19 @@
+import 'reflect-metadata';
 import { User } from '@/user/User';
+import { Game, GameEvents } from '@cards-against/game';
 import { instanceToPlain } from 'class-transformer';
 import { Server, Socket } from 'socket.io';
 import { InternalRoomEvents, OutgoingRoomEvents } from '../events';
-import { NotRoomOwnerError } from '../NotRoomOwnerError';
-import { Room } from '../room';
-import { ROOM_ERROR, ROOM_ERRORS } from '../room.errors';
+import { GameInProgressError } from '../GameInProgressError';
+import { GameNotInProgressError } from '../GameNotInProgressError';
+import { IncomingGameEvent, Room } from '../room';
+import { BadEventError } from '../BadEventError';
 
 jest.mock('@cards-against/game/Game', () => ({
   Game: jest.fn(() => ({
     startRound: jest.fn(),
+    playCard: jest.fn(),
+    pickCard: jest.fn(),
     on: jest.fn(),
   })),
 }));
@@ -17,6 +22,7 @@ describe('Room', () => {
   const mockSocketBuilder = () => {
     return {
       join: jest.fn(),
+      emit: jest.fn(),
     } as unknown as Socket;
   };
 
@@ -166,14 +172,17 @@ describe('Room', () => {
 
       const room = new Room(owner, server);
 
-      room.startGame(owner);
+      room.addUser(player as Required<User>);
+      room.startGame();
 
-      expect(room['game']).toBeDefined();
-      expect(room['game'].startRound).toHaveBeenCalled();
-      expect(room['game'].on).toHaveBeenCalledTimes(9);
+      const game: Game = Reflect.get(room, 'game');
+
+      expect(game).toBeDefined();
+      expect(game.startRound).toHaveBeenCalled();
+      expect(game.on).toHaveBeenCalledTimes(9);
     });
 
-    it('Should throw error when user starting game is not owner', () => {
+    it('Should throw error when game is already in progress', () => {
       const server = mockSocketServerBuilder();
       const playerSocket = mockSocketBuilder();
       const ownerSocket = mockSocketBuilder();
@@ -185,16 +194,110 @@ describe('Room', () => {
 
       const room = new Room(owner, server);
 
-      expect(() => room.startGame(player)).toThrowError(NotRoomOwnerError);
+      room.addUser(player as Required<User>);
+      room.startGame();
+
+      expect(() => room.startGame()).toThrowError(GameInProgressError);
     });
-    it.todo('Should throw error when game is already in progress');
+
+    it.todo('Shoudl call all outgoing game events');
   });
 
   describe('handleIncomingGameEvent', () => {
-    it.todo('Should throw an error when no game is in progress');
-    it.todo('Should match passed event with related game method');
-    it.todo(
-      'Shoud throw an error when the event does not match possible events',
+    it('Should throw an error when no game is in progress', () => {
+      const server = mockSocketServerBuilder();
+      const playerSocket = mockSocketBuilder();
+      const ownerSocket = mockSocketBuilder();
+      const owner = new User('owner');
+      const player = new User('player');
+
+      owner.setSocket(ownerSocket);
+      player.setSocket(playerSocket);
+
+      const room = new Room(owner, server);
+
+      room.addUser(player as Required<User>);
+
+      expect(() =>
+        room.handleIncomingGameEvent(player, {
+          event: GameEvents.PLAYED_CARD_PICK,
+          data: {
+            card: 'asd',
+          },
+        }),
+      ).toThrowError(GameNotInProgressError);
+    });
+
+    it.each([[GameEvents.PLAYER_CARD_PLAYED], [GameEvents.PLAYED_CARD_PICK]])(
+      'Should match passed event with related game method',
+      (event) => {
+        const server = mockSocketServerBuilder();
+        const playerSocket = mockSocketBuilder();
+        const ownerSocket = mockSocketBuilder();
+        const owner = new User('owner');
+        const player = new User('player');
+
+        owner.setSocket(ownerSocket);
+        player.setSocket(playerSocket);
+
+        const room = new Room(owner, server);
+        const payload = {
+          event: event as IncomingGameEvent,
+          data: {
+            card: 'card',
+          },
+        };
+
+        room.addUser(player as Required<User>);
+        room.startGame();
+
+        const game: Game = Reflect.get(room, 'game');
+
+        room.handleIncomingGameEvent(player, payload);
+
+        switch (event) {
+          case GameEvents.PLAYER_CARD_PLAYED:
+            expect(game.playCard).toHaveBeenCalledWith(
+              player.id,
+              payload.data.card,
+            );
+            break;
+          case GameEvents.PLAYED_CARD_PICK:
+            expect(game.pickCard).toHaveBeenCalledWith(
+              player.id,
+              payload.data.card,
+            );
+            break;
+          default:
+            throw new Error('Bad event.');
+        }
+      },
     );
+
+    it('Shoud throw an error when the event does not match possible events', () => {
+      const server = mockSocketServerBuilder();
+      const playerSocket = mockSocketBuilder();
+      const ownerSocket = mockSocketBuilder();
+      const owner = new User('owner');
+      const player = new User('player');
+
+      owner.setSocket(ownerSocket);
+      player.setSocket(playerSocket);
+
+      const room = new Room(owner, server);
+      const payload = {
+        event: 'asd' as IncomingGameEvent,
+        data: {
+          card: 'card',
+        },
+      };
+
+      room.addUser(player as Required<User>);
+      room.startGame();
+
+      expect(() => room.handleIncomingGameEvent(player, payload)).toThrowError(
+        BadEventError,
+      );
+    });
   });
 });

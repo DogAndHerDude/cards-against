@@ -12,10 +12,11 @@ import {
 } from '@cards-against/game';
 import { InternalRoomEvents, OutgoingRoomEvents } from './events';
 import { instanceToPlain } from 'class-transformer';
-import { ROOM_ERROR, ROOM_ERRORS } from './room.errors';
-import { NotRoomOwnerError } from './NotRoomOwnerError';
 import { GameInProgressError } from './GameInProgressError';
+import { GameNotInProgressError } from './GameNotInProgressError';
+import { BadEventError } from './BadEventError';
 
+// TODO: Refactor enum to as const
 export type IncomingGameEvent =
   | GameEvents.PLAYER_CARD_PLAYED
   | GameEvents.PLAYED_CARD_PICK;
@@ -81,11 +82,7 @@ export class Room {
     return !!this.game;
   }
 
-  public startGame(user: User): void {
-    if (user !== this.owner) {
-      throw new NotRoomOwnerError();
-    }
-
+  public startGame(): void {
     // TODO: If fewer than min players emit error
     if (this.game) {
       throw new GameInProgressError();
@@ -109,8 +106,7 @@ export class Room {
     { event, data }: IncomingGameEventPayload,
   ): void {
     if (!this.game) {
-      // TODO: Throw error to upper scope
-      return;
+      throw new GameNotInProgressError();
     }
 
     switch (event) {
@@ -121,8 +117,7 @@ export class Room {
         this.game.pickCard(user.id, data.card);
         return;
       default:
-        // TODO: Emit an error to the user
-        return;
+        throw new BadEventError();
     }
   }
 

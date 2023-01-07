@@ -25,6 +25,7 @@ import { RoomNotFoundError } from '@/room/RoomNotFoundError';
 import { WsRoomNotFoundException } from './errors/WsRoomNotFoundException';
 import { UseGuards } from '@nestjs/common';
 import { SocketAuthGuard } from '@/guards/auth.guard';
+import { OwnerGuard } from '@/guards/room-owner.guard';
 
 @WebSocketGateway()
 export class SocketGateway implements OnGatewayConnection, OnGatewayDisconnect {
@@ -158,18 +159,17 @@ export class SocketGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   @SubscribeMessage(IncomingRoomEvents.START_GAME)
+  @UseGuards(SocketAuthGuard)
+  @UseGuards(OwnerGuard)
   public handleGameStart(
     @ConnectedSocket() socket: AuthorizedSocket,
     @MessageBody() data: StartGameDTO,
   ): void {
     try {
-      // TODO: refactor getUser to throw error and just handle it all in a catch block
-      const user = this.userService.getUser(socket.user.id);
+      // TODO: Validate if game is in progress inside of a guard
       const room = this.roomService.getRoom(data.roomID);
 
-      // TODO: Validate if game is in progress
-
-      room.startGame(user);
+      room.startGame();
     } catch (error) {
       if (error instanceof UserNotFoundError) {
         throw new WsUserNotFoundException();

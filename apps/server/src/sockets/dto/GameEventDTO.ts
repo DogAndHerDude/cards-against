@@ -5,7 +5,7 @@ import { GameEvents } from '@cards-against/game';
 export class GameEventDTO {
   @IsString()
   @IsNotEmpty()
-  roomID: string;
+  roomId: string;
 
   @IsIn([GameEvents.PLAYER_CARD_PLAYED, GameEvents.PLAYED_CARD_PICK])
   @IsString()

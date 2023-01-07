@@ -4,7 +4,7 @@ import { RoomService } from '@/room/room.service';
 import { UserService } from '@/user/user.service';
 import { AuthorizedSocket } from '@/sockets/AuthorizedSocket';
 
-type RoomIdPartial = Record<string, unknown> & { roomID?: string };
+type roomIdPartial = Record<string, unknown> & { roomId?: string };
 
 @Injectable()
 export class RoomOwnerGuard implements CanActivate {
@@ -16,14 +16,14 @@ export class RoomOwnerGuard implements CanActivate {
   public canActivate(context: ExecutionContext) {
     const host = context.switchToWs();
     const client = host.getClient<AuthorizedSocket | Socket>();
-    const { roomID } = host.getData<RoomIdPartial>();
+    const { roomId } = host.getData<roomIdPartial>();
 
-    if (!('user' in client) || !roomID) {
+    if (!('user' in client) || !roomId) {
       return false;
     }
 
     const user = this.userService.getUser(client.user.id);
-    const room = this.roomService.getRoom(roomID);
+    const room = this.roomService.getRoom(roomId);
 
     return room.owner === user;
   }

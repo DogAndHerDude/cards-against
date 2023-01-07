@@ -130,9 +130,9 @@ export class Room {
       this.server.to(this.id).emit(GameEvents.GAME_STARTED),
     );
     this.game.on(GameEvents.HAND_OUT_CARDS, (data) =>
-      Object.entries(data).forEach(([userID, whiteCards]) => {
+      Object.entries(data).forEach(([userId, whiteCards]) => {
         const user = Array.from(this.players.values()).find(
-          (user) => user.id === userID,
+          (user) => user.id === userId,
         );
 
         if (!user) {

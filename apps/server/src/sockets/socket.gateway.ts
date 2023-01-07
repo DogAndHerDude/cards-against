@@ -116,7 +116,7 @@ export class SocketGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   @SubscribeMessage(IncomingRoomEvents.JOIN_ROOM)
   @UseGuards(SocketAuthGuard)
-  public joinRoom() {
+  public joinRoom(@ConnectedSocket() socket: AuthorizedSocket) {
     //
   }
 
@@ -134,7 +134,7 @@ export class SocketGateway implements OnGatewayConnection, OnGatewayDisconnect {
   ): void {
     try {
       const user = this.userService.getUser(socket.user.id);
-      const room = this.roomService.getRoom(data.roomID);
+      const room = this.roomService.getRoom(data.roomId);
 
       // TODO: Should validate whether the user is in a room, because now you can send it to any room you wish
       // TODO: Probably best to validate that inside of a guard
@@ -167,7 +167,7 @@ export class SocketGateway implements OnGatewayConnection, OnGatewayDisconnect {
   ): void {
     try {
       // TODO: Validate if game is in progress inside of a guard
-      const room = this.roomService.getRoom(data.roomID);
+      const room = this.roomService.getRoom(data.roomId);
 
       room.startGame();
     } catch (error) {

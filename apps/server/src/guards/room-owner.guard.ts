@@ -1,12 +1,13 @@
 import { Socket } from 'socket.io';
-import { CanActivate, ExecutionContext } from '@nestjs/common';
+import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
 import { RoomService } from '@/room/room.service';
 import { UserService } from '@/user/user.service';
 import { AuthorizedSocket } from '@/sockets/AuthorizedSocket';
 
 type RoomIdPartial = Record<string, unknown> & { roomID?: string };
 
-export class OwnerGuard implements CanActivate {
+@Injectable()
+export class RoomOwnerGuard implements CanActivate {
   constructor(
     private readonly roomService: RoomService,
     private readonly userService: UserService,
@@ -23,10 +24,6 @@ export class OwnerGuard implements CanActivate {
 
     const user = this.userService.getUser(client.user.id);
     const room = this.roomService.getRoom(roomID);
-
-    if (!user || !room) {
-      return false;
-    }
 
     return room.owner === user;
   }

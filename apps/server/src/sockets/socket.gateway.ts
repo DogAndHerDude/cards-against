@@ -25,7 +25,7 @@ import { RoomNotFoundError } from '@/room/RoomNotFoundError';
 import { WsRoomNotFoundException } from './errors/WsRoomNotFoundException';
 import { UseGuards } from '@nestjs/common';
 import { SocketAuthGuard } from '@/guards/auth.guard';
-import { OwnerGuard } from '@/guards/room-owner.guard';
+import { RoomOwnerGuard } from '@/guards/room-owner.guard';
 
 @WebSocketGateway()
 export class SocketGateway implements OnGatewayConnection, OnGatewayDisconnect {
@@ -160,7 +160,7 @@ export class SocketGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   @SubscribeMessage(IncomingRoomEvents.START_GAME)
   @UseGuards(SocketAuthGuard)
-  @UseGuards(OwnerGuard)
+  @UseGuards(RoomOwnerGuard)
   public handleGameStart(
     @ConnectedSocket() socket: AuthorizedSocket,
     @MessageBody() data: StartGameDTO,

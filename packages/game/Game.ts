@@ -16,7 +16,7 @@ export class Game {
   public static readonly MAX_CARDS = 6;
   public static readonly MIN_PLAYERS = 2;
 
-  private currentCzarID?: string;
+  private currentCzarId?: string;
   private nextCzarID?: string;
   private startTimer?: NodeJS.Timeout;
   private roundTimer?: NodeJS.Timeout;
@@ -71,7 +71,7 @@ export class Game {
   }
 
   public getCardCar(): string | undefined {
-    return this.currentCzarID;
+    return this.currentCzarId;
   }
 
   public getNextCardCzar(): string | undefined {
@@ -92,7 +92,7 @@ export class Game {
       return;
     }
 
-    if (this.currentCzarID === playerID) {
+    if (this.currentCzarId === playerID) {
       this.endRoundPrematurely();
     }
   }
@@ -117,11 +117,11 @@ export class Game {
   }
 
   public pickCard(pickerID: string, card: string): void {
-    if (pickerID !== this.currentCzarID) {
+    if (pickerID !== this.currentCzarId) {
       return;
     }
 
-    const cardCzar = this.players.find(({ id }) => id === this.currentCzarID);
+    const cardCzar = this.players.find(({ id }) => id === this.currentCzarId);
     const winningPlayer = this.players.find(
       (player) => player.getCardInPlay() === card
     );
@@ -150,7 +150,7 @@ export class Game {
     this.handOutCards();
     this.emit<IRoundStartedPayload>(GameEvents.ROUND_STARTED, {
       blackCard,
-      cardCzar: this.currentCzarID as string,
+      cardCzar: this.currentCzarId as string,
       roundTimer: this.config.roundTimer,
     });
     this.roundTimer = setTimeout(() => this.endPlay, this.config.roundTimer);
@@ -158,11 +158,11 @@ export class Game {
 
   private pickCardCzar() {
     if (!this.nextCzarID) {
-      this.currentCzarID = this.players[0].id;
+      this.currentCzarId = this.players[0].id;
       // Check if players available
       // If not, throw error
     } else {
-      this.currentCzarID = this.nextCzarID;
+      this.currentCzarId = this.nextCzarID;
     }
 
     this.prepareNextCardCzar();
@@ -170,7 +170,7 @@ export class Game {
 
   private prepareNextCardCzar() {
     const prevCardCzarIndex = this.players.findIndex(
-      ({ id }) => id === this.currentCzarID
+      ({ id }) => id === this.currentCzarId
     );
     const nextCzar = this.players[prevCardCzarIndex + 1];
 
@@ -204,7 +204,7 @@ export class Game {
     clearTimeout(this.roundTimer);
 
     const playedCards = this.players
-      .filter(({ id }) => id !== this.currentCzarID)
+      .filter(({ id }) => id !== this.currentCzarId)
       .map((player) => {
         return player.getCardInPlay();
       })
@@ -249,7 +249,7 @@ export class Game {
   }
 
   private postRoundHandler(): void {
-    const cardCzar = this.players.find(({ id }) => id === this.currentCzarID);
+    const cardCzar = this.players.find(({ id }) => id === this.currentCzarId);
 
     // Czar possibly quit
     if (!cardCzar) {
@@ -307,7 +307,7 @@ export class Game {
   private allPlayersPlayedCards(): boolean {
     return (
       this.players
-        .filter(({ id }) => id !== this.currentCzarID)
+        .filter(({ id }) => id !== this.currentCzarId)
         .find((player) => !!player.getCardInPlay()) !== undefined
     );
   }

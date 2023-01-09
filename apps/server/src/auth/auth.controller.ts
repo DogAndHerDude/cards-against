@@ -11,7 +11,7 @@ import { AuthService } from './auth.service';
 import { LoginDTO } from './dto/login.dto';
 import { UserExistsError } from '@/user/errors/UserExistsError';
 
-@Controller('/auth')
+@Controller('auth')
 export class AuthController {
   private readonly logger = new Logger();
 
@@ -20,7 +20,7 @@ export class AuthController {
     private readonly authService: AuthService,
   ) {}
 
-  @Post('/login')
+  @Post('login')
   public async login(@Body() { name }: LoginDTO) {
     try {
       const user = this.userService.createUser(name);

@@ -16,6 +16,7 @@ class Game {
             throw new TooFewPlayersError_1.TooFewPlayersError(players.length, Game.MIN_PLAYERS);
         }
     }
+    // TODO: Need to get game state when joining a game in progress
     on(event, cb) {
         this.eventEmitter.on(event, cb);
     }
@@ -36,6 +37,9 @@ class Game {
         return {
             players: (_b = (_a = this.players) === null || _a === void 0 ? void 0 : _a.map((player) => player.toPlain())) !== null && _b !== void 0 ? _b : [],
         };
+    }
+    getLastevent() {
+        return this.lastEvent;
     }
     getPlayers() {
         return this.players;
@@ -109,7 +113,7 @@ class Game {
             cardCzar: this.currentCzarId,
             roundTimer: this.config.roundTimer,
         });
-        this.roundTimer = setTimeout(() => this.endPlay, this.config.roundTimer);
+        this.roundTimer = setTimeout(() => this.endPlay(), this.config.roundTimer);
     }
     pickCardCzar() {
         if (!this.nextCzarID) {
@@ -222,6 +226,7 @@ class Game {
             .find((player) => !!player.getCardInPlay()) !== undefined);
     }
     emit(event, data) {
+        this.lastEvent = event;
         this.eventEmitter.emit(event, data);
     }
 }

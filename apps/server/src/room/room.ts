@@ -81,6 +81,7 @@ export class Room {
     // TODO: Get card packs in use
     return {
       id: this.id,
+      lastEvent: this.game.getLastevent(),
       round: this.game?.getRound() ?? 0,
       inProgress: this.isGameInProgress(),
       players: playersWithScore,

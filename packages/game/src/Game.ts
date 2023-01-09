@@ -22,6 +22,7 @@ export class Game {
   private roundTimer?: NodeJS.Timeout;
   private pickTimer?: NodeJS.Timeout;
   private round = 0;
+  private lastEvent?: GameEvents;
 
   private eventEmitter = new EventEmitter();
 
@@ -62,6 +63,10 @@ export class Game {
     return {
       players: this.players?.map((player) => player.toPlain()) ?? [],
     };
+  }
+
+  public getLastevent(): GameEvents | undefined {
+    return this.lastEvent;
   }
 
   public getPlayers(): Array<Player> {
@@ -318,6 +323,7 @@ export class Game {
     event: GameEvents,
     data?: T
   ): void {
+    this.lastEvent = event;
     this.eventEmitter.emit(event, data);
   }
 }

@@ -1,6 +1,6 @@
-import { CardService, Game, GameDeck, GameEvents } from "..";
-import { IGameConfig } from "../IGameConfig";
-import { Player } from "../Player";
+import { CardService, Game, GameDeck, GameEvents } from "../src";
+import { IGameConfig } from "../src/IGameConfig";
+import { Player } from "../src/Player";
 import { GameRunnerTimeoutError } from "./GameRunnnerTimeoutError";
 
 export interface IGameEventStashItem {

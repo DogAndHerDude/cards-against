@@ -1,0 +1,1 @@
+{"version":3,"file":"TooFewPlayersError.d.ts","sourceRoot":"","sources":["../../src/errors/TooFewPlayersError.ts"],"names":[],"mappings":"AAAA,qBAAa,kBAAmB,SAAQ,KAAK;IAC3C,OAAc,OAAO,EAAE,MAAM,CAAqB;gBAEtC,OAAO,EAAE,MAAM,EAAE,QAAQ,EAAE,MAAM;CAI9C"}

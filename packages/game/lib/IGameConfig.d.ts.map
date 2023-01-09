@@ -1,0 +1,1 @@
+{"version":3,"file":"IGameConfig.d.ts","sourceRoot":"","sources":["../src/IGameConfig.ts"],"names":[],"mappings":"AAAA,MAAM,WAAW,WAAW;IAC1B,UAAU,EAAE,MAAM,CAAC;IACnB,SAAS,EAAE,MAAM,CAAC;IAClB,SAAS,EAAE,MAAM,CAAC;IAClB,KAAK,EAAE,KAAK,CAAC,MAAM,CAAC,CAAC;IACrB,UAAU,EAAE,MAAM,CAAC;CACpB"}

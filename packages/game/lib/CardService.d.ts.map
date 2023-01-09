@@ -1,0 +1,1 @@
+{"version":3,"file":"CardService.d.ts","sourceRoot":"","sources":["../src/CardService.ts"],"names":[],"mappings":"AACA,OAAO,EAAE,KAAK,EAAE,MAAM,SAAS,CAAC;AAEhC,qBAAa,WAAW;IACtB,OAAO,CAAC,MAAM,CAAC,YAAY;IAgB3B,OAAO,CAAC,IAAI,CAA4C;IAEjD,OAAO,CAAC,KAAK,CAAC,EAAE,KAAK,CAAC,MAAM,CAAC,GAAG,KAAK,CAAC,KAAK,CAAC;CASpD"}

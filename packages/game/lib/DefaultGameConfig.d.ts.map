@@ -1,0 +1,1 @@
+{"version":3,"file":"DefaultGameConfig.d.ts","sourceRoot":"","sources":["../src/DefaultGameConfig.ts"],"names":[],"mappings":"AAAA,OAAO,EAAE,WAAW,EAAE,MAAM,eAAe,CAAC;AAE5C,qBAAa,iBAAkB,YAAW,WAAW;IAE1C,UAAU;IACV,SAAS;IACT,SAAS;IACT,KAAK;IACL,UAAU;gBAJV,UAAU,SAAQ,EAClB,SAAS,SAAQ,EACjB,SAAS,SAAK,EACd,KAAK,UAAK,EACV,UAAU,SAAK;CAEzB"}

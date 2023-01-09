@@ -4,8 +4,8 @@
   "extends": "./base.json",
   "compilerOptions": {
     "lib": ["ES2015"],
-    "module": "ESNext",
-    "target": "es6",
+    "module": "CommonJS",
+    "target": "ES2017",
     "isolatedModules": false,
     "resolveJsonModule": true
   }

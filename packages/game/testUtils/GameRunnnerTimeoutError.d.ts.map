@@ -1,0 +1,1 @@
+{"version":3,"file":"GameRunnnerTimeoutError.d.ts","sourceRoot":"","sources":["GameRunnnerTimeoutError.ts"],"names":[],"mappings":"AAAA,OAAO,EAAE,mBAAmB,EAAE,MAAM,cAAc,CAAC;AAEnD,qBAAa,sBAAuB,SAAQ,KAAK;aAK7B,WAAW,EAAE,KAAK,CAAC,mBAAmB,CAAC;IAJlD,MAAM,EAAE,KAAK,CAAC,mBAAmB,CAAC,OAAO,CAAC,CAAC,CAAM;gBAGtD,OAAO,EAAE,MAAM,EACC,WAAW,EAAE,KAAK,CAAC,mBAAmB,CAAC;CAM1D"}

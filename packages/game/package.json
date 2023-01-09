@@ -4,11 +4,13 @@
   "description": "> TODO: description",
   "author": "Dominykas Bartkus <dominykasbart@gmail.com>",
   "homepage": "",
+  "main": "./lib/index.js",
+  "types": "./lib",
   "license": "ISC",
   "scripts": {
     "test": "jest",
     "test:game": "jest --detectOpenHandles",
-    "build:game": "tsc"
+    "build": "tsc"
   },
   "dependencies": {
     "lodash.shuffle": "^4.2.0"

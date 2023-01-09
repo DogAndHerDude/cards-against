@@ -1,6 +1,6 @@
 import { GameEvents } from "../GameEvents";
 import { Player } from "../Player";
-import { GameRunner } from "../testUtils/GameRunner";
+import { GameRunner } from "../../testUtils/GameRunner";
 import { IRoundStartedPayload } from "../payloads/IRoundStartedPayload";
 import { CardService, Game, GameDeck } from "..";
 import { TooFewPlayersError } from "../errors/TooFewPlayersError";

@@ -1,15 +1,14 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { Socket } from 'socket.io';
+import { Test } from '@nestjs/testing';
 import { UserExistsError } from '../errors/UserExistsError';
+import { UserNotFoundError } from '../errors/UserNotFoundError';
 import { User } from '../User';
 import { UserService } from '../user.service';
 
 describe('UserService', () => {
   let userService: UserService;
-  const socket = {} as unknown as Socket;
 
   beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
+    const module = await Test.createTestingModule({
       providers: [UserService],
     }).compile();
 
@@ -18,13 +17,13 @@ describe('UserService', () => {
 
   describe('createUser', () => {
     it('Should create adnd return a user with given arguments', () => {
-      expect(userService.createUser('name', socket)).toBeInstanceOf(User);
+      expect(userService.createUser('name')).toBeInstanceOf(User);
     });
 
     it('Should throw UserExistsError when user with a given name already exists', () => {
-      const user = userService.createUser('name', socket);
+      const user = userService.createUser('name');
 
-      expect(() => userService.createUser(user.name, socket)).toThrowError(
+      expect(() => userService.createUser(user.name)).toThrowError(
         UserExistsError,
       );
     });
@@ -37,11 +36,12 @@ describe('UserService', () => {
 
   describe('removeUser', () => {
     it('Should remove existing user', () => {
-      const user = userService.createUser('name', socket);
+      const user = userService.createUser('name');
 
       userService.removeUser(user.id);
-
-      expect(userService.getUser(user.id)).toBeUndefined();
+      expect(() => userService.getUser(user.id)).toThrowError(
+        UserNotFoundError,
+      );
     });
   });
 });

@@ -10,7 +10,6 @@ import { useListRooms } from "./hooks/useListRooms";
 
 export default function Rooms() {
   const router = useRouter();
-  const user = useAppSelector((state) => state.user);
   const rooms = useAppSelector(selectAllRooms);
   const createRoom = useCreateRoom();
   const onCreateRoomClick = useCallback(() => createRoom(), [createRoom]);

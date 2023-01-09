@@ -155,7 +155,7 @@ export class Game {
       cardCzar: this.currentCzarId as string,
       roundTimer: this.config.roundTimer,
     });
-    this.roundTimer = setTimeout(() => this.endPlay, this.config.roundTimer);
+    this.roundTimer = setTimeout(() => this.endPlay(), this.config.roundTimer);
   }
 
   private pickCardCzar() {

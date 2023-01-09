@@ -30,6 +30,7 @@ import { RoomUserGuard } from '@/guards/room-user.guard';
 import { JoinRoomDTO } from './dto/JoinRoomDTO';
 import { User } from '@/user/User';
 import { LeaveRoomDTO } from './dto/LeaveRoom.dto';
+import { GetRoomDTO } from './dto/get-room.dto';
 
 @WebSocketGateway({ cors: true })
 export class SocketGateway implements OnGatewayConnection, OnGatewayDisconnect {
@@ -89,6 +90,19 @@ export class SocketGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @UseGuards(SocketAuthGuard)
   public listRooms() {
     return this.roomService.listRooms();
+  }
+
+  @SubscribeMessage(IncomingRoomEvents.GET_ROOM)
+  @UseGuards(SocketAuthGuard)
+  @UseGuards(RoomUserGuard)
+  public getRoom(@MessageBody() data: GetRoomDTO) {
+    try {
+      const room = this.roomService.getRoom(data.roomId);
+
+      return room.getRoomDetails();
+    } catch (error) {
+      throw new WsException(error.message);
+    }
   }
 
   @SubscribeMessage(IncomingRoomEvents.CREATE_ROOM)

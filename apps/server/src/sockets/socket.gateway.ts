@@ -7,6 +7,7 @@ import {
   SubscribeMessage,
   WebSocketGateway,
   WebSocketServer,
+  WsException,
 } from '@nestjs/websockets';
 import { JsonWebTokenError } from 'jsonwebtoken';
 import { SOCKET_GATEWAY_ERRORS } from './gateway.errors';
@@ -15,7 +16,6 @@ import { AuthService } from '@/auth/auth.service';
 import { RoomService } from '@/room/room.service';
 import { AuthorizedSocket } from './AuthorizedSocket';
 import { IncomingRoomEvents } from '@/room/events';
-import { MessageDTO } from './dto/MessageDTO';
 import { StartGameDTO } from './dto/StartGameDTO';
 import { UserNotFoundError } from '@/user/errors/UserNotFoundError';
 import { WsUserNotFoundException } from './errors/WsUserNotFoundException';
@@ -26,6 +26,10 @@ import { WsRoomNotFoundException } from './errors/WsRoomNotFoundException';
 import { UseGuards } from '@nestjs/common';
 import { SocketAuthGuard } from '@/guards/auth.guard';
 import { RoomOwnerGuard } from '@/guards/room-owner.guard';
+import { RoomUserGuard } from '@/guards/room-user.guard';
+import { JoinRoomDTO } from './dto/JoinRoomDTO';
+import { User } from '@/user/User';
+import { LeaveRoomDTO } from './dto/LeaveRoom.dto';
 
 @WebSocketGateway()
 export class SocketGateway implements OnGatewayConnection, OnGatewayDisconnect {
@@ -116,18 +120,40 @@ export class SocketGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   @SubscribeMessage(IncomingRoomEvents.JOIN_ROOM)
   @UseGuards(SocketAuthGuard)
-  public joinRoom(@ConnectedSocket() socket: AuthorizedSocket) {
-    //
+  public joinRoom(
+    @ConnectedSocket() socket: AuthorizedSocket,
+    @MessageBody() data: JoinRoomDTO,
+  ) {
+    try {
+      const user = this.userService.getUser(socket.user.id);
+      const room = this.roomService.getRoom(data.roomId);
+
+      room.addUser(user as Required<User>);
+    } catch (error) {
+      throw new WsException(error.message);
+    }
   }
 
   @SubscribeMessage(IncomingRoomEvents.LEAVE_ROOM)
   @UseGuards(SocketAuthGuard)
-  public leaveRoom() {
-    //
+  @UseGuards(RoomUserGuard)
+  public leaveRoom(
+    @ConnectedSocket() socket: AuthorizedSocket,
+    @MessageBody() data: LeaveRoomDTO,
+  ) {
+    try {
+      const user = this.userService.getUser(socket.user.id);
+      const room = this.roomService.getRoom(data.roomId);
+
+      room.removeUser(user as Required<User>);
+    } catch (error) {
+      throw new WsException(error.message);
+    }
   }
 
   @SubscribeMessage(IncomingRoomEvents.GAME_EVENT)
   @UseGuards(SocketAuthGuard)
+  @UseGuards(RoomUserGuard)
   public handleGameEvent(
     @ConnectedSocket() socket: AuthorizedSocket,
     @MessageBody() data: GameEventDTO,

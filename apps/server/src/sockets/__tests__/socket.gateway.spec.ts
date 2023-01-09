@@ -1,28 +1,45 @@
+import 'reflect-metadata';
 import { AuthModule } from '@/auth/auth.module';
 import { AuthService } from '@/auth/auth.service';
 import { RoomModule } from '@/room/room.module';
+import { User } from '@/user/User';
 import { UserModule } from '@/user/user.module';
 import { UserService } from '@/user/user.service';
+import { RoomService } from '@/room/room.service';
 import { JwtService } from '@nestjs/jwt';
 import { Test } from '@nestjs/testing';
-import { Socket } from 'socket.io';
+import { Server, Socket } from 'socket.io';
 import { v4 } from 'uuid';
 import { AuthorizedSocket } from '../AuthorizedSocket';
 import { SOCKET_GATEWAY_ERRORS } from '../gateway.errors';
 import { SocketGateway } from '../socket.gateway';
 import { SocketModule } from '../socket.module';
+import { plainToInstance } from 'class-transformer';
+import { JoinRoomDTO } from '../dto/JoinRoomDTO';
 
 describe('SocketGateway', () => {
   let gateway: SocketGateway;
   let authService: AuthService;
   let userService: UserService;
+  let roomService: RoomService;
+  let mockServer: Server;
 
-  const createMockAuthedSocket = () => {
+  const createMockServer = () => {
+    const server = {
+      to: jest.fn(() => server),
+      emit: jest.fn(),
+    } as unknown as Server;
+
+    return server;
+  };
+
+  const createMockAuthedSocket = (id?: string) => {
     return {
       user: {
-        id: v4(),
+        id: id ?? v4(),
       },
-    } as AuthorizedSocket;
+      join: jest.fn(),
+    } as unknown as AuthorizedSocket;
   };
   const createMockBasicSocket = (token?: string) => {
     return {
@@ -33,6 +50,18 @@ describe('SocketGateway', () => {
       },
     } as unknown as Socket;
   };
+  const createAuthedUser = (count = 1) => {
+    return Array(count)
+      .fill(null)
+      .map((_, idx) => {
+        const user = userService.createUser(`User ${idx}`);
+        const socket = createMockAuthedSocket(user.id);
+
+        user.setSocket(socket);
+
+        return user;
+      });
+  };
 
   beforeAll(async () => {
     const module = await Test.createTestingModule({
@@ -42,6 +71,14 @@ describe('SocketGateway', () => {
     gateway = module.get(SocketGateway);
     userService = module.get(UserService);
     authService = module.get(AuthService);
+    roomService = module.get(RoomService);
+  });
+
+  beforeEach(() => {
+    gateway.server = mockServer = createMockServer();
+    const users: Map<string, User> = Reflect.get(userService, 'users');
+
+    users.clear();
   });
 
   describe('handleConnection', () => {
@@ -93,15 +130,33 @@ describe('SocketGateway', () => {
     });
   });
 
-  // describe('createRoom', () => {
-  //   it('Should create a room and respond with its details', async () => {
-  //     const mockSocket = createMockSocket();
+  describe('createRoom', () => {
+    it('Should create a room and respond with its details', async () => {
+      const user = userService.createUser('name');
+      const mockSocket = createMockAuthedSocket(user.id);
 
-  //     expect(gateway.createRoom(mockSocket)).resolves.toStrictEqual({
-  //       id: expect.any(String),
-  //       players: 1,
-  //       isGameInProgress: false,
-  //     });
-  //   });
-  // });
+      user.setSocket(mockSocket);
+      expect(gateway.createRoom(mockSocket)).toStrictEqual({
+        id: expect.any(String),
+        players: 1,
+        gameInProgress: false,
+      });
+    });
+  });
+
+  describe('joinRoom', () => {
+    it('Adds player to a specified room', () => {
+      const [owner, player] = createAuthedUser(2);
+      const result = gateway.createRoom(owner.socket as AuthorizedSocket);
+      const room = roomService.getRoom(result.id);
+      const dto = plainToInstance(JoinRoomDTO, { roomId: result.id });
+
+      gateway.joinRoom(player.socket as AuthorizedSocket, dto);
+      expect(room.players.has(player)).toBeTruthy();
+    });
+  });
+
+  describe('leaveRoom', () => {
+    it.todo('Removes player from room');
+  });
 });

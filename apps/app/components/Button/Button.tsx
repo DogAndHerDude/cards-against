@@ -10,7 +10,13 @@ export const Button = ({
   HTMLButtonElement
 >) => {
   return (
-    <button className={twMerge("", className ?? "")} {...props}>
+    <button
+      className={twMerge(
+        "border px-5 py-2 rounded-lg bg-slate-800 text-slate-100 text-sm",
+        className ?? ""
+      )}
+      {...props}
+    >
       {children}
     </button>
   );

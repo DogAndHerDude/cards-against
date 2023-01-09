@@ -152,7 +152,7 @@ describe('SocketGateway', () => {
       const dto = plainToInstance(JoinRoomDTO, { roomId: result.id });
 
       gateway.joinRoom(player.socket as AuthorizedSocket, dto);
-      expect(room.players.has(player)).toBeTruthy();
+      expect(room.users.has(player)).toBeTruthy();
     });
   });
 

@@ -1,5 +1,5 @@
-import decode from "jwt-decode";
 import { createSelector, createSlice, PayloadAction } from "@reduxjs/toolkit";
+import { type RootState } from "../store";
 
 type UserSliceState = {
   id?: string;
@@ -23,8 +23,6 @@ export const userSlice = createSlice({
     },
   },
 });
-
-// export const selectUser = createSelector();
 
 export const userReduer = userSlice.reducer;
 

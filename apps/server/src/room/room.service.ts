@@ -27,11 +27,9 @@ export class RoomService {
   }
 
   public listRooms() {
-    return Array.from(this.rooms.values()).map((room) => ({
-      id: room.id,
-      players: room.players.size,
-      gameInProgress: room.isGameInProgress(),
-    }));
+    return Array.from(this.rooms.values()).map((room) =>
+      room.getBasicDetails(),
+    );
   }
 
   public removeRoom(id: string) {

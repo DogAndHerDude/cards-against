@@ -25,6 +25,6 @@ export class RoomUserGuard implements CanActivate {
     const user = this.userService.getUser(client.user.id);
     const room = this.roomService.getRoom(roomId);
 
-    return room.players.has(user);
+    return room.users.has(user);
   }
 }

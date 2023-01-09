@@ -31,7 +31,7 @@ export type IncomingGameEventPayload = {
 export class Room {
   public readonly id = v4();
   private server: Server;
-  public players = new Set<User>();
+  public users = new Set<User>();
   public owner: User;
   private readonly cardService = new CardService();
   // TODO: Refactor to GameConfig that implements IGameConfig and generates default config within with methods to manipulate the config
@@ -44,8 +44,47 @@ export class Room {
     this.owner = owner;
     this.server = server;
 
-    this.players.add(owner);
+    this.users.add(owner);
     owner.socket.join(this.id);
+  }
+
+  // TODO: Test
+  public getBasicDetails() {
+    return {
+      id: this.id,
+      players: this.users.size,
+      inProgress: this.isGameInProgress(),
+    };
+  }
+
+  public getRoomDetails() {
+    const users = Array.from(this.users.values());
+    const players = this.game?.getPlayers() ?? [];
+    const playersWithScore = users.map((user) => {
+      const player = players.find(({ id }) => id === user.id);
+
+      if (!player) {
+        return {
+          ...user,
+          score: 0,
+        };
+      }
+
+      return {
+        ...user,
+        score: player.getPoints(),
+      };
+    });
+
+    // TODO: Get game state
+    // TODO: Get max round count
+    // TODO: Get card packs in use
+    return {
+      id: this.id,
+      round: this.game?.getRound() ?? 0,
+      inProgress: this.isGameInProgress(),
+      players: playersWithScore,
+    };
   }
 
   public on(event: InternalRoomEvents, cb: () => void): void {
@@ -55,7 +94,7 @@ export class Room {
   public addUser(user: Required<User>): void {
     // TODO: Check if game in progres and add user to the game
     // TODO: Check if max player limit reached
-    this.players.add(user);
+    this.users.add(user);
     user.socket.join(this.id);
     this.server.to(this.id).emit(OutgoingRoomEvents.USER_JOINED, {
       user: instanceToPlain(user),
@@ -63,15 +102,15 @@ export class Room {
   }
 
   public removeUser(user: User): void {
-    this.players.delete(user);
+    this.users.delete(user);
 
     // TODO: If fewer than min required players then stop game and emit game ended event
 
-    if (this.players.size && user === this.owner) {
-      this.owner = Array.from(this.players.values())[0];
+    if (this.users.size && user === this.owner) {
+      this.owner = Array.from(this.users.values())[0];
     }
 
-    if (!this.players.size) {
+    if (!this.users.size) {
       this.emitter.emit(InternalRoomEvents.ROOM_CLOSED);
     }
 
@@ -91,7 +130,7 @@ export class Room {
     }
 
     this.game = new Game(
-      Array.from(this.players.values()).map(
+      Array.from(this.users.values()).map(
         (playerUser) => new Player(playerUser.id),
       ),
       this.gameConfig,
@@ -133,7 +172,7 @@ export class Room {
     );
     this.game.on(GameEvents.HAND_OUT_CARDS, (data) =>
       Object.entries(data).forEach(([userId, whiteCards]) => {
-        const user = Array.from(this.players.values()).find(
+        const user = Array.from(this.users.values()).find(
           (user) => user.id === userId,
         );
 

@@ -15,7 +15,7 @@ import { UserService } from '@/user/user.service';
 import { AuthService } from '@/auth/auth.service';
 import { RoomService } from '@/room/room.service';
 import { AuthorizedSocket } from './AuthorizedSocket';
-import { IncomingRoomEvents } from '@/room/events';
+import { IncomingRoomEvents, OutgoingRoomEvents } from '@/room/events';
 import { StartGameDTO } from './dto/StartGameDTO';
 import { UserNotFoundError } from '@/user/errors/UserNotFoundError';
 import { WsUserNotFoundException } from './errors/WsUserNotFoundException';
@@ -31,7 +31,7 @@ import { JoinRoomDTO } from './dto/JoinRoomDTO';
 import { User } from '@/user/User';
 import { LeaveRoomDTO } from './dto/LeaveRoom.dto';
 
-@WebSocketGateway()
+@WebSocketGateway({ cors: true })
 export class SocketGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer()
   public server!: Server;
@@ -97,14 +97,11 @@ export class SocketGateway implements OnGatewayConnection, OnGatewayDisconnect {
     try {
       const user = this.userService.getUser(socket.user.id);
       const room = this.roomService.createRoom(user, this.server);
+      const details = room.getBasicDetails();
 
-      // TODO: Refactor to getRoomDetails
-      // TODO: Emit game config as well
-      return {
-        id: room.id,
-        players: room.players.size,
-        gameInProgress: false,
-      };
+      this.server.emit(OutgoingRoomEvents.ROOM_CREATED, details);
+
+      return details;
     } catch (error) {
       if (error instanceof UserNotFoundError) {
         throw new WsUserNotFoundException();

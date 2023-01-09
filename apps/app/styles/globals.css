@@ -5,5 +5,5 @@
 html,
 body,
 #__next {
-  @apply min-h-screen bg-zinc-900 w-screen font-sans;
+  @apply min-h-screen bg-slate-50 w-screen;
 }

@@ -46,7 +46,7 @@ describe('Room', () => {
       const room = new Room(owner, server);
 
       expect(room).toBeDefined();
-      expect(room.players.has(owner)).toBeTruthy();
+      expect(room.users.has(owner)).toBeTruthy();
       expect(owner.socket.join).toHaveBeenCalledWith(room.id);
     });
   });
@@ -65,7 +65,7 @@ describe('Room', () => {
       const room = new Room(owner, server);
 
       room.addUser(player as Required<User>);
-      expect(room.players.has(player)).toBeTruthy();
+      expect(room.users.has(player)).toBeTruthy();
       expect(playerSocket.join).toHaveBeenCalledWith(room.id);
       expect(server.to).toHaveBeenCalledWith(room.id);
       expect(server.emit).toHaveBeenCalledWith(OutgoingRoomEvents.USER_JOINED, {
@@ -90,7 +90,7 @@ describe('Room', () => {
       room.addUser(player as Required<User>);
       room.removeUser(player);
       expect(room.owner).toEqual(owner);
-      expect(room.players.has(player)).toBeFalsy();
+      expect(room.users.has(player)).toBeFalsy();
       expect(server.to).toHaveBeenCalledWith(room.id);
       expect(server.emit).toHaveBeenLastCalledWith(
         OutgoingRoomEvents.USER_LEFT,
@@ -113,7 +113,7 @@ describe('Room', () => {
       room.on(InternalRoomEvents.ROOM_CLOSED, eventCb);
       room.removeUser(owner);
 
-      expect(room.players.size).toBe(0);
+      expect(room.users.size).toBe(0);
       expect(eventCb).toHaveBeenCalled();
     });
 

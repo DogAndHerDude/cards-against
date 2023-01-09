@@ -2,8 +2,9 @@ import { Module } from '@nestjs/common';
 import { AuthModule } from './auth/auth.module';
 import { UserModule } from './user/user.module';
 import { RoomModule } from './room/room.module';
+import { SocketModule } from './sockets/socket.module';
 
 @Module({
-  imports: [AuthModule, UserModule, RoomModule],
+  imports: [AuthModule, UserModule, RoomModule, SocketModule],
 })
 export class AppModule {}

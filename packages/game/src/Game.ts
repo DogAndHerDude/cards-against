@@ -35,6 +35,8 @@ export class Game {
     }
   }
 
+  // TODO: Need to get game state when joining a game in progress
+
   public on<T extends string = string, P = any>(
     event: T,
     cb: (payload: P) => void

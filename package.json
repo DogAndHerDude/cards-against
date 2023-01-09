@@ -1,11 +1,12 @@
 {
   "name": "cards-against",
   "version": "0.0.0",
-  "private": true,
-  "workspaces": [
-    "apps/*",
-    "packages/*"
-  ],
+  "workspaces": {
+    "packages": [
+      "apps/*",
+      "packages/*"
+    ]
+  },
   "scripts": {
     "build": "turbo run build",
     "dev": "turbo run dev --parallel",
@@ -13,7 +14,8 @@
     "lint": "turbo run lint",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
     "server": "yarn workspace @cards-against/server",
-    "game": "yarn workspace @cards-against/game"
+    "game": "yarn workspace @cards-against/game",
+    "app": "yarn workspace @cards-against/app"
   },
   "devDependencies": {
     "eslint-config-custom": "*",
@@ -21,9 +23,8 @@
     "turbo": "latest"
   },
   "engines": {
-    "npm": ">=7.0.0",
+    "yarn": ">=2.0.0",
     "node": ">=14.0.0"
   },
-  "dependencies": {},
-  "packageManager": "npm@8.9.0"
+  "packageManager": "yarn@3.3.1"
 }

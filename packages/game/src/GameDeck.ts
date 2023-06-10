@@ -11,23 +11,23 @@ export class GameDeck {
     this.blackCards = this.mapBlackCards(deck);
   }
 
-  public getWhiteCards(count: number): Array<IWhiteCard> {
+  public getWhiteCards(count: number) {
     return this.whiteCards.splice(0, count);
   }
 
-  public getBlackCard(): IBlackCard | undefined {
+  public getBlackCard() {
     return this.blackCards.shift();
   }
 
-  public listWhiteCards(): Array<IWhiteCard> {
+  public listWhiteCards() {
     return this.whiteCards.slice();
   }
 
-  public listBlackCards(): Array<IBlackCard> {
+  public listBlackCards() {
     return this.blackCards.slice();
   }
 
-  private mapWhiteCards(deck: Array<IPack>): Array<IWhiteCard> {
+  private mapWhiteCards(deck: Array<IPack>) {
     return shuffle(
       deck.reduce<Array<IWhiteCard>>((accumulator, pack) => {
         accumulator = [...accumulator, ...pack.white];
@@ -37,7 +37,7 @@ export class GameDeck {
     );
   }
 
-  private mapBlackCards(deck: Array<IPack>): Array<IBlackCard> {
+  private mapBlackCards(deck: Array<IPack>) {
     return shuffle(
       deck.reduce<Array<IBlackCard>>((accumulator, pack) => {
         accumulator = [...accumulator, ...pack.black];

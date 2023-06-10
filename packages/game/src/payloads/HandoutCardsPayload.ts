@@ -1,5 +1,5 @@
 import { IWhiteCard } from "../ICard";
 
-export interface IHandoutCardsPayload {
+export type HandoutCardsPayload = {
   [key: string]: Array<IWhiteCard>;
-}
+};

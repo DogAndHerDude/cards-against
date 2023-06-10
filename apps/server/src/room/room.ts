@@ -24,7 +24,7 @@ export type IncomingGameEvent =
 export type IncomingGameEventPayload = {
   event: IncomingGameEvent;
   data: {
-    card: string;
+    cards: string[];
   };
 };
 
@@ -65,7 +65,7 @@ export class Room {
 
       if (!player) {
         return {
-          ...user,
+          ...instanceToPlain(user),
           score: 0,
         };
       }
@@ -81,7 +81,7 @@ export class Room {
     // TODO: Get card packs in use
     return {
       id: this.id,
-      lastEvent: this.game.getLastevent(),
+      lastEvent: this.game?.getLastevent(),
       round: this.game?.getRound() ?? 0,
       inProgress: this.isGameInProgress(),
       players: playersWithScore,
@@ -108,6 +108,8 @@ export class Room {
     // TODO: If fewer than min required players then stop game and emit game ended event
 
     if (this.users.size && user === this.owner) {
+      // Room owner left
+      // Set first in stack as new owner
       this.owner = Array.from(this.users.values())[0];
     }
 
@@ -153,10 +155,10 @@ export class Room {
 
     switch (event) {
       case GameEvents.PLAYER_CARD_PLAYED:
-        this.game.playCard(user.id, data.card);
+        this.game.playCard(user.id, data.cards);
         return;
       case GameEvents.PLAYED_CARD_PICK:
-        this.game.pickCard(user.id, data.card);
+        this.game.pickCard(user.id, data.cards);
         return;
       default:
         throw new BadEventError();

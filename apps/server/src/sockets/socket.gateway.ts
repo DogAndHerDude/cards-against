@@ -32,6 +32,11 @@ import { User } from '@/user/User';
 import { LeaveRoomDTO } from './dto/LeaveRoom.dto';
 import { GetRoomDTO } from './dto/get-room.dto';
 
+/*
+ * TODOs:
+ * 1. Refactor enums to const
+ */
+
 @WebSocketGateway({ cors: true })
 export class SocketGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer()
@@ -101,6 +106,7 @@ export class SocketGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
       return room.getRoomDetails();
     } catch (error) {
+      console.error(error);
       throw new WsException(error.message);
     }
   }

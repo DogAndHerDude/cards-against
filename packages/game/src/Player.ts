@@ -3,8 +3,8 @@ import { CardNotFoundError } from "./errors/CardNotFoundError";
 import { IPlainPlayer } from "./IPlainPlayer";
 
 export class Player {
-  private cardInPlay?: string;
-  private cardPick?: string;
+  private cardsInPlay?: string[];
+  private cardPick?: string[];
   private cards: Array<IWhiteCard> = [];
   private playedCards: Array<IWhiteCard> = [];
   private points = 0;
@@ -15,50 +15,53 @@ export class Player {
     return this.cards;
   }
 
-  public addCards(cards: Array<IWhiteCard>): void {
+  public addCards(cards: Array<IWhiteCard>) {
     this.cards = [...this.cards, ...cards];
   }
 
-  public playCard(text: string): void {
-    const card = this.cards.find((card) => card.text === text);
+  public playCard(text: string[]) {
+    const cards = this.cards.filter((card) => text.includes(card.text));
 
-    if (!card) {
+    if (!cards.length) {
       throw new CardNotFoundError();
     }
 
-    this.cardInPlay = card.text;
+    this.cardsInPlay = cards.map((card) => card.text);
   }
 
-  public pickCard(text: string): void {
+  public pickCard(text: string[]) {
     this.cardPick = text;
   }
 
-  public getCardPick(): string | undefined {
+  public getCardPick() {
     return this.cardPick;
   }
 
-  public getCardInPlay(): string | undefined {
-    return this.cardInPlay;
+  public getCardInPlay() {
+    return this.cardsInPlay;
   }
 
-  public clearCardInPlay(): void {
-    if (!this.cardInPlay) {
+  public clearCardInPlay() {
+    if (!this.cardsInPlay) {
       // TODO: throw error no card in play
     }
 
     // this.playedCards = [...this.playedCards, this.cardInPlay];
-    this.cards = this.cards.filter((card) => card.text !== this.cardInPlay);
-    this.cardInPlay = undefined;
+    this.cards = this.cards.filter((card) =>
+      this.cardsInPlay?.includes(card.text)
+    );
+    this.cardsInPlay = undefined;
   }
 
-  public getPoints(): number {
+  public getPoints() {
     return this.points;
   }
 
-  public addPoint(): void {
+  public addPoint() {
     this.points += 1;
   }
 
+  // TODO: Refactor this shit to instanceToPlain
   public toPlain(): IPlainPlayer {
     return {
       id: this.id,

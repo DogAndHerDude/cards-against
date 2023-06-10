@@ -1,7 +1,7 @@
 import { IBlackCard } from "../ICard";
 
-export interface IRoundStartedPayload {
+export type RoundStartedPayload = {
   blackCard: IBlackCard;
   cardCzar: string;
   roundTimer: number;
-}
+};

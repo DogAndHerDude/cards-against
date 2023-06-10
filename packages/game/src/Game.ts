@@ -2,14 +2,13 @@ import { EventEmitter } from "events";
 import { GameDeck } from "./GameDeck";
 import { Player } from "./Player";
 import { IGameConfig } from "./IGameConfig";
-import { IGameSummary } from "./IGameSummary";
 import { GameEvents } from "./GameEvents";
-import { IGameDetails } from "./IGameDetails";
-import { IRoundStartedPayload } from "./payloads/IRoundStartedPayload";
-import { IHandoutCardsPayload } from "./payloads/IHandoutCardsPayload";
-import { IRoundEndedPayload } from "./payloads/IRoundEndedPayload";
+import { RoundStartedPayload } from "./payloads/RoundStartedPayload";
+import { HandoutCardsPayload } from "./payloads/HandoutCardsPayload";
+import { RoundEndedPayload } from "./payloads/RoundEndedPayload";
 import { TooFewPlayersError } from "./errors/TooFewPlayersError";
 import { PlayerDoesNotExistError } from "./errors/PlayerDoesNotExistError";
+import { IBlackCard } from "./ICard";
 
 export class Game {
   public static readonly TIMER_BETWEEN_ROUNDS = 5000;
@@ -22,6 +21,8 @@ export class Game {
   private roundTimer?: NodeJS.Timeout;
   private pickTimer?: NodeJS.Timeout;
   private round = 0;
+  private blackCard?: IBlackCard;
+  // TODO: Refactor to an event history data
   private lastEvent?: GameEvents;
 
   private eventEmitter = new EventEmitter();
@@ -45,7 +46,7 @@ export class Game {
     this.eventEmitter.on(event, cb);
   }
 
-  public getGameSummary(): IGameSummary {
+  public getGameSummary() {
     // TODO: show card packs
     return {
       players: this.players.length,
@@ -59,33 +60,33 @@ export class Game {
     };
   }
 
-  public getGameDetails(): IGameDetails {
+  public getGameDetails() {
     return {
       players: this.players?.map((player) => player.toPlain()) ?? [],
     };
   }
 
-  public getLastevent(): GameEvents | undefined {
+  public getLastevent() {
     return this.lastEvent;
   }
 
-  public getPlayers(): Array<Player> {
+  public getPlayers() {
     return this.players;
   }
 
-  public getRound(): number {
+  public getRound() {
     return this.round;
   }
 
-  public getCardCar(): string | undefined {
+  public getCardCar() {
     return this.currentCzarId;
   }
 
-  public getNextCardCzar(): string | undefined {
+  public getNextCardCzar() {
     return this.nextCzarID;
   }
 
-  public removePlayer(playerID: string): void {
+  public removePlayer(playerID: string) {
     this.players = this.players.filter((player) => player.id !== playerID);
 
     if (this.players.length < Game.MIN_PLAYERS) {
@@ -104,49 +105,58 @@ export class Game {
     }
   }
 
-  // TODO: refactor to take an array of cards
-  public playCard(playerID: string, card: string): void {
+  public playCard(playerID: string, cards: string[]) {
     const player = this.players.find(({ id }) => id === playerID);
 
-    if (player) {
-      player?.playCard(card);
-
-      this.emit(GameEvents.PLAYER_CARD_PLAYED, {
-        playerID,
-      });
-    } else {
+    if (!player) {
       throw new PlayerDoesNotExistError();
     }
+
+    if (!this.blackCard) {
+      throw new Error("PLACEHOLDER: No black card in play");
+    }
+
+    if (this.blackCard.pick > cards.length) {
+      throw new Error("PLACEHOLDER: Too few cards played.");
+    }
+
+    player.playCard(cards);
+    this.emit(GameEvents.PLAYER_CARD_PLAYED, {
+      playerID,
+    });
 
     if (this.allPlayersPlayedCards()) {
       this.endPlay();
     }
   }
 
-  public pickCard(pickerID: string, card: string): void {
+  public pickCards(pickerID: string, cards: string[]) {
     if (pickerID !== this.currentCzarId) {
       return;
     }
 
     const cardCzar = this.players.find(({ id }) => id === this.currentCzarId);
-    const winningPlayer = this.players.find(
-      (player) => player.getCardInPlay() === card
-    );
+    const winningPlayer = this.players.find((player) => {
+      return (
+        player.getCardInPlay()?.filter((card) => cards.includes(card))
+          .length === cards.length
+      );
+    });
 
-    cardCzar?.pickCard(card);
+    cardCzar?.pickCard(cards);
     winningPlayer?.addPoint();
     this.endPick();
   }
 
-  public startRound(): void {
+  public startRound() {
     if (!this.round) {
       this.emit(GameEvents.GAME_STARTED);
     }
 
     this.round += 1;
-    const blackCard = this.deck.getBlackCard();
+    this.blackCard = this.deck.getBlackCard();
 
-    if (blackCard === undefined) {
+    if (this.blackCard === undefined) {
       // Notify reason
       this.endGame();
       return;
@@ -155,8 +165,8 @@ export class Game {
     this.pickCardCzar();
     // TODO: Need to pass amount of cards to hand out based on what the pick count is
     this.handOutCards();
-    this.emit<IRoundStartedPayload>(GameEvents.ROUND_STARTED, {
-      blackCard,
+    this.emit<RoundStartedPayload>(GameEvents.ROUND_STARTED, {
+      blackCard: this.blackCard,
       cardCzar: this.currentCzarId as string,
       roundTimer: this.config.roundTimer,
     });
@@ -188,7 +198,7 @@ export class Game {
     }
   }
 
-  private handOutCards(): void {
+  private handOutCards() {
     this.players.forEach((player) => {
       const playerCards = player.getCards();
       const newCards = this.deck.getWhiteCards(
@@ -197,9 +207,9 @@ export class Game {
 
       player.addCards(newCards);
     });
-    this.emit<IHandoutCardsPayload>(
+    this.emit<HandoutCardsPayload>(
       GameEvents.HAND_OUT_CARDS,
-      this.players.reduce<IHandoutCardsPayload>((accumulator, player) => {
+      this.players.reduce<HandoutCardsPayload>((accumulator, player) => {
         accumulator[player.id] = player.getCards();
 
         return accumulator;
@@ -207,7 +217,7 @@ export class Game {
     );
   }
 
-  private endPlay(): void {
+  private endPlay() {
     clearTimeout(this.roundTimer);
 
     const playedCards = this.players
@@ -215,19 +225,19 @@ export class Game {
       .map((player) => {
         return player.getCardInPlay();
       })
-      .filter(Boolean) as Array<string>;
+      .filter(Boolean) as string[][];
 
     if (!playedCards.length) {
       this.endRoundPrematurely("No cards played");
     }
 
-    this.emit<IRoundEndedPayload>(GameEvents.PLAY_ENDED, {
+    this.emit<RoundEndedPayload>(GameEvents.PLAY_ENDED, {
       playedCards,
     });
     this.startPickTimer();
   }
 
-  private startPickTimer(): void {
+  private startPickTimer() {
     this.pickTimer = setTimeout(() => this.endPick, this.config.pickTimer);
     this.emit(GameEvents.PICK_STARTED, {
       pickTimer: this.config.pickTimer,
@@ -239,7 +249,7 @@ export class Game {
     this.postRoundHandler();
   }
 
-  private endRoundPrematurely(reason?: string): void {
+  private endRoundPrematurely(reason?: string) {
     if (this.playerReachedMaxPoints()) {
       this.endGame();
       return;
@@ -255,7 +265,7 @@ export class Game {
     );
   }
 
-  private postRoundHandler(): void {
+  private postRoundHandler() {
     const cardCzar = this.players.find(({ id }) => id === this.currentCzarId);
 
     // Czar possibly quit
@@ -267,9 +277,14 @@ export class Game {
       return;
     }
 
-    const winningPlayer = this.players.find(
-      (player) => cardCzar.getCardPick() === player.getCardInPlay()
-    );
+    const winningPlayer = this.players.find((player) => {
+      const pick = cardCzar.getCardPick();
+
+      return (
+        player.getCardInPlay()?.filter((card) => pick?.includes(card))
+          .length === pick?.length
+      );
+    });
 
     this.emit(GameEvents.PICK_ENDED, {
       playerID: winningPlayer?.id ?? null,
@@ -289,7 +304,7 @@ export class Game {
     );
   }
 
-  public endGame(reason?: string): void {
+  public endGame(reason?: string) {
     this.cleanupTimers();
     this.emit(GameEvents.GAME_ENDED, {
       summary: this.getGameSummary(),
@@ -297,13 +312,13 @@ export class Game {
     });
   }
 
-  private cleanupTimers(): void {
+  private cleanupTimers() {
     clearTimeout(this.startTimer);
     clearTimeout(this.roundTimer);
     clearTimeout(this.pickTimer);
   }
 
-  private playerReachedMaxPoints(): boolean {
+  private playerReachedMaxPoints() {
     return (
       this.players.find(
         (player) => player.getPoints() === this.config.maxPoints
@@ -311,7 +326,7 @@ export class Game {
     );
   }
 
-  private allPlayersPlayedCards(): boolean {
+  private allPlayersPlayedCards() {
     return (
       this.players
         .filter(({ id }) => id !== this.currentCzarId)
@@ -322,7 +337,7 @@ export class Game {
   private emit<T extends Record<keyof T, unknown> | undefined = undefined>(
     event: GameEvents,
     data?: T
-  ): void {
+  ) {
     this.lastEvent = event;
     this.eventEmitter.emit(event, data);
   }

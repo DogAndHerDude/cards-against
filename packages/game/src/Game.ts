@@ -138,7 +138,7 @@ export class Game {
     const cardCzar = this.players.find(({ id }) => id === this.currentCzarId);
     const winningPlayer = this.players.find((player) => {
       return (
-        player.getCardInPlay()?.filter((card) => cards.includes(card))
+        player.getCardsInPlay()?.filter((card) => cards.includes(card))
           .length === cards.length
       );
     });
@@ -223,7 +223,7 @@ export class Game {
     const playedCards = this.players
       .filter(({ id }) => id !== this.currentCzarId)
       .map((player) => {
-        return player.getCardInPlay();
+        return player.getCardsInPlay();
       })
       .filter(Boolean) as string[][];
 
@@ -255,7 +255,7 @@ export class Game {
       return;
     }
 
-    this.players.forEach((player) => player.clearCardInPlay());
+    this.players.forEach((player) => player.clearCardsInPlay());
     this.emit(GameEvents.ROUND_ENDED, {
       reason,
     });
@@ -281,14 +281,14 @@ export class Game {
       const pick = cardCzar.getCardPick();
 
       return (
-        player.getCardInPlay()?.filter((card) => pick?.includes(card))
+        player.getCardsInPlay()?.filter((card) => pick?.includes(card))
           .length === pick?.length
       );
     });
 
     this.emit(GameEvents.PICK_ENDED, {
       playerID: winningPlayer?.id ?? null,
-      winningCard: winningPlayer?.getCardInPlay() ?? null,
+      winningCard: winningPlayer?.getCardsInPlay() ?? null,
     });
 
     if (this.playerReachedMaxPoints()) {
@@ -296,7 +296,7 @@ export class Game {
       return;
     }
 
-    this.players.forEach((player) => player.clearCardInPlay());
+    this.players.forEach((player) => player.clearCardsInPlay());
     this.emit(GameEvents.ROUND_ENDED);
     this.startTimer = setTimeout(
       () => this.startRound(),
@@ -330,7 +330,7 @@ export class Game {
     return (
       this.players
         .filter(({ id }) => id !== this.currentCzarId)
-        .find((player) => !!player.getCardInPlay()) !== undefined
+        .find((player) => !!player.getCardsInPlay()) !== undefined
     );
   }
 

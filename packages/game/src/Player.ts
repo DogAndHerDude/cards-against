@@ -37,11 +37,11 @@ export class Player {
     return this.cardPick;
   }
 
-  public getCardInPlay() {
+  public getCardsInPlay() {
     return this.cardsInPlay;
   }
 
-  public clearCardInPlay() {
+  public clearCardsInPlay() {
     if (!this.cardsInPlay) {
       // TODO: throw error no card in play
     }

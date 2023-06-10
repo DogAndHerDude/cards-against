@@ -1,7 +1,7 @@
 import { GameEvents } from "../GameEvents";
 import { Player } from "../Player";
 import { GameRunner } from "../../testUtils/GameRunner";
-import { IRoundStartedPayload } from "../payloads/IRoundStartedPayload";
+import { RoundStartedPayload } from "../payloads/RoundStartedPayload";
 import { CardService, Game, GameDeck } from "..";
 import { TooFewPlayersError } from "../errors/TooFewPlayersError";
 
@@ -35,20 +35,24 @@ describe("Game", () => {
         GameEvents.GAME_ENDED,
       ];
 
-      gameRunner.onRoundStarted((data: IRoundStartedPayload, players) => {
+      gameRunner.onRoundStarted((data: RoundStartedPayload, players) => {
         const regularPlayer = players.find(({ id }) => id !== data.cardCzar);
 
         if (!regularPlayer) {
           throw new Error("Could not find a player for this round");
         }
 
-        const cardToPlay = regularPlayer.getCards()[0];
+        const cardsToPlay = new Array(data.blackCard.pick)
+          .fill(null)
+          .map((_, index) => regularPlayer.getCards()[index].text);
 
-        gameRunner.game.playCard(regularPlayer.id, cardToPlay.text);
+        gameRunner.game.playCard(regularPlayer.id, cardsToPlay);
       });
       gameRunner.onPickStarted((_, players) => {
-        const czar = players.find((player) => !player.getCardInPlay());
-        const player = players.find((player) => !!player.getCardInPlay());
+        const czar = players.find((player) => !player.getCardsInPlay()?.length);
+        const player = players.find(
+          (player) => !!player.getCardsInPlay()?.length
+        );
 
         if (!czar) {
           throw new Error("Could not find czar for this round");
@@ -58,11 +62,11 @@ describe("Game", () => {
           throw new Error("Could not find player to pick this round");
         }
 
-        if (!player.getCardInPlay()) {
+        if (!player.getCardsInPlay()) {
           throw new Error("Player does not have a card in play");
         }
 
-        gameRunner.game.pickCard(czar.id, player.getCardInPlay() as string);
+        gameRunner.game.pickCards(czar.id, player.getCardsInPlay() as string[]);
       });
 
       const emittedEvents = await gameRunner.play();
@@ -108,7 +112,7 @@ describe("Game", () => {
       const playerSetup = [new Player("0"), new Player("1"), new Player("2")];
       const gameRunner = new GameRunner(playerSetup);
 
-      gameRunner.onRoundStarted((data: IRoundStartedPayload, players) => {
+      gameRunner.onRoundStarted((data: RoundStartedPayload, players) => {
         const cardCzar = players.find(({ id }) => data.cardCzar === id);
 
         if (!cardCzar) {
@@ -148,7 +152,7 @@ describe("Game", () => {
     const playerSetup = [new Player("0"), new Player("1"), new Player("2")];
     const gameRunner = new GameRunner(playerSetup);
 
-    gameRunner.onRoundStarted((data: IRoundStartedPayload, players) => {
+    gameRunner.onRoundStarted((data: RoundStartedPayload, players) => {
       const nextCardCzar = players.find(
         ({ id }) => gameRunner.game.getNextCardCzar() === id
       );
@@ -169,11 +173,17 @@ describe("Game", () => {
         return;
       }
 
-      gameRunner.game.playCard(player.id, player.getCards()[0].text);
+      const cardsToPlay = new Array(data.blackCard.pick)
+        .fill(null)
+        .map((_, index) => player.getCards()[index].text);
+
+      gameRunner.game.playCard(player.id, cardsToPlay);
     });
     gameRunner.onPickStarted((_, players) => {
-      const czar = players.find((player) => !player.getCardInPlay());
-      const player = players.find((player) => !!player.getCardInPlay());
+      const czar = players.find((player) => !player.getCardsInPlay()?.length);
+      const player = players.find(
+        (player) => !!player.getCardsInPlay()?.length
+      );
 
       if (!czar) {
         throw new Error("Could not find czar for this round");
@@ -183,11 +193,11 @@ describe("Game", () => {
         throw new Error("Could not find player to pick this round");
       }
 
-      if (!player.getCardInPlay()) {
+      if (!player.getCardsInPlay()) {
         throw new Error("Player does not have a card in play");
       }
 
-      gameRunner.game.pickCard(czar.id, player.getCardInPlay() as string);
+      gameRunner.game.pickCards(czar.id, player.getCardsInPlay() as string[]);
     });
 
     const emittedEvents = await gameRunner.play();

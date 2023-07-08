@@ -15,7 +15,7 @@
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
     "server": "yarn workspace @cards-against/server",
     "game": "yarn workspace @cards-against/game",
-    "app": "yarn workspace @cards-against/app"
+    "client": "yarn workspace @cards-against/client"
   },
   "devDependencies": {
     "eslint-config-custom": "*",

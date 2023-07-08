@@ -1,4 +1,4 @@
-export enum SocketGatewayConnectionEvents {
-  ERROR = 'ERROR',
-  LIST_ROOMS = 'LIST_ROOMS',
-}
+export const SocketGatewayConnectionEvents = {
+  ERROR: 'ERROR',
+  LIST_ROOMS: 'LIST_ROOMS',
+} as const;

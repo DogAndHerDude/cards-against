@@ -1,0 +1,1 @@
+{"version":3,"file":"HandoutCardsPayload.d.ts","sourceRoot":"","sources":["../../src/payloads/HandoutCardsPayload.ts"],"names":[],"mappings":"AAAA,OAAO,EAAE,UAAU,EAAE,MAAM,UAAU,CAAC;AAEtC,MAAM,MAAM,mBAAmB,GAAG;IAChC,CAAC,GAAG,EAAE,MAAM,GAAG,KAAK,CAAC,UAAU,CAAC,CAAC;CAClC,CAAC"}

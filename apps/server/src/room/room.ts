@@ -158,7 +158,7 @@ export class Room {
         this.game.playCard(user.id, data.cards);
         return;
       case GameEvents.PLAYED_CARD_PICK:
-        this.game.pickCard(user.id, data.cards);
+        this.game.pickCards(user.id, data.cards);
         return;
       default:
         throw new BadEventError();

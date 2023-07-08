@@ -4,10 +4,10 @@ export declare class GameDeck {
     private whiteCards;
     private blackCards;
     constructor(deck: Array<IPack>);
-    getWhiteCards(count: number): Array<IWhiteCard>;
+    getWhiteCards(count: number): IWhiteCard[];
     getBlackCard(): IBlackCard | undefined;
-    listWhiteCards(): Array<IWhiteCard>;
-    listBlackCards(): Array<IBlackCard>;
+    listWhiteCards(): IWhiteCard[];
+    listBlackCards(): IBlackCard[];
     private mapWhiteCards;
     private mapBlackCards;
 }

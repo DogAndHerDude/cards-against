@@ -139,7 +139,7 @@ describe('SocketGateway', () => {
       expect(gateway.createRoom(mockSocket)).toStrictEqual({
         id: expect.any(String),
         players: 1,
-        gameInProgress: false,
+        inProgress: false,
       });
     });
   });

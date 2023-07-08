@@ -185,7 +185,7 @@ export class SocketGateway implements OnGatewayConnection, OnGatewayDisconnect {
       room.handleIncomingGameEvent(user, {
         event: data.event,
         data: {
-          card: data.cards[0], // TODO: room needs to be refactored to take multiple cards, in turn so will the game need to be refactored to account for that
+          cards: data.cards,
         },
       });
     } catch (error) {

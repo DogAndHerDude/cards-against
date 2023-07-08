@@ -1,9 +1,7 @@
 import { GameDeck } from "./GameDeck";
 import { Player } from "./Player";
 import { IGameConfig } from "./IGameConfig";
-import { IGameSummary } from "./IGameSummary";
 import { GameEvents } from "./GameEvents";
-import { IGameDetails } from "./IGameDetails";
 export declare class Game {
     private players;
     private readonly config;
@@ -17,20 +15,27 @@ export declare class Game {
     private roundTimer?;
     private pickTimer?;
     private round;
+    private blackCard?;
     private lastEvent?;
     private eventEmitter;
     constructor(players: Array<Player>, config: IGameConfig, deck: GameDeck);
     on<T extends string = string, P = any>(event: T, cb: (payload: P) => void): void;
-    getGameSummary(): IGameSummary;
-    getGameDetails(): IGameDetails;
+    getGameSummary(): {
+        players: number;
+        round: number;
+        topScore: number;
+    };
+    getGameDetails(): {
+        players: import("./IPlainPlayer").IPlainPlayer[];
+    };
     getLastevent(): GameEvents | undefined;
-    getPlayers(): Array<Player>;
+    getPlayers(): Player[];
     getRound(): number;
     getCardCar(): string | undefined;
     getNextCardCzar(): string | undefined;
     removePlayer(playerID: string): void;
-    playCard(playerID: string, card: string): void;
-    pickCard(pickerID: string, card: string): void;
+    playCard(playerID: string, cards: string[]): void;
+    pickCards(pickerID: string, cards: string[]): void;
     startRound(): void;
     private pickCardCzar;
     private prepareNextCardCzar;

@@ -2,7 +2,7 @@ import { IWhiteCard } from "./ICard";
 import { IPlainPlayer } from "./IPlainPlayer";
 export declare class Player {
     readonly id: string;
-    private cardInPlay?;
+    private cardsInPlay?;
     private cardPick?;
     private cards;
     private playedCards;
@@ -10,11 +10,11 @@ export declare class Player {
     constructor(id: string);
     getCards(): Array<IWhiteCard>;
     addCards(cards: Array<IWhiteCard>): void;
-    playCard(text: string): void;
-    pickCard(text: string): void;
-    getCardPick(): string | undefined;
-    getCardInPlay(): string | undefined;
-    clearCardInPlay(): void;
+    playCard(text: string[]): void;
+    pickCard(text: string[]): void;
+    getCardPick(): string[] | undefined;
+    getCardsInPlay(): string[] | undefined;
+    clearCardsInPlay(): void;
     getPoints(): number;
     addPoint(): void;
     toPlain(): IPlainPlayer;

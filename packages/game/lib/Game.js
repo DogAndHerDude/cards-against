@@ -68,29 +68,35 @@ class Game {
             this.endRoundPrematurely();
         }
     }
-    // TODO: refactor to take an array of cards
-    playCard(playerID, card) {
+    playCard(playerID, cards) {
         const player = this.players.find(({ id }) => id === playerID);
-        if (player) {
-            player === null || player === void 0 ? void 0 : player.playCard(card);
-            this.emit(GameEvents_1.GameEvents.PLAYER_CARD_PLAYED, {
-                playerID,
-            });
-        }
-        else {
+        if (!player) {
             throw new PlayerDoesNotExistError_1.PlayerDoesNotExistError();
         }
+        if (!this.blackCard) {
+            throw new Error("PLACEHOLDER: No black card in play");
+        }
+        if (this.blackCard.pick > cards.length) {
+            throw new Error("PLACEHOLDER: Too few cards played.");
+        }
+        player.playCard(cards);
+        this.emit(GameEvents_1.GameEvents.PLAYER_CARD_PLAYED, {
+            playerID,
+        });
         if (this.allPlayersPlayedCards()) {
             this.endPlay();
         }
     }
-    pickCard(pickerID, card) {
+    pickCards(pickerID, cards) {
         if (pickerID !== this.currentCzarId) {
             return;
         }
         const cardCzar = this.players.find(({ id }) => id === this.currentCzarId);
-        const winningPlayer = this.players.find((player) => player.getCardInPlay() === card);
-        cardCzar === null || cardCzar === void 0 ? void 0 : cardCzar.pickCard(card);
+        const winningPlayer = this.players.find((player) => {
+            var _a;
+            return (((_a = player.getCardsInPlay()) === null || _a === void 0 ? void 0 : _a.filter((card) => cards.includes(card)).length) === cards.length);
+        });
+        cardCzar === null || cardCzar === void 0 ? void 0 : cardCzar.pickCard(cards);
         winningPlayer === null || winningPlayer === void 0 ? void 0 : winningPlayer.addPoint();
         this.endPick();
     }
@@ -99,8 +105,8 @@ class Game {
             this.emit(GameEvents_1.GameEvents.GAME_STARTED);
         }
         this.round += 1;
-        const blackCard = this.deck.getBlackCard();
-        if (blackCard === undefined) {
+        this.blackCard = this.deck.getBlackCard();
+        if (this.blackCard === undefined) {
             // Notify reason
             this.endGame();
             return;
@@ -109,7 +115,7 @@ class Game {
         // TODO: Need to pass amount of cards to hand out based on what the pick count is
         this.handOutCards();
         this.emit(GameEvents_1.GameEvents.ROUND_STARTED, {
-            blackCard,
+            blackCard: this.blackCard,
             cardCzar: this.currentCzarId,
             roundTimer: this.config.roundTimer,
         });
@@ -152,7 +158,7 @@ class Game {
         const playedCards = this.players
             .filter(({ id }) => id !== this.currentCzarId)
             .map((player) => {
-            return player.getCardInPlay();
+            return player.getCardsInPlay();
         })
             .filter(Boolean);
         if (!playedCards.length) {
@@ -178,7 +184,7 @@ class Game {
             this.endGame();
             return;
         }
-        this.players.forEach((player) => player.clearCardInPlay());
+        this.players.forEach((player) => player.clearCardsInPlay());
         this.emit(GameEvents_1.GameEvents.ROUND_ENDED, {
             reason,
         });
@@ -192,16 +198,20 @@ class Game {
             this.startTimer = setTimeout(() => this.startRound(), Game.TIMER_BETWEEN_ROUNDS);
             return;
         }
-        const winningPlayer = this.players.find((player) => cardCzar.getCardPick() === player.getCardInPlay());
+        const winningPlayer = this.players.find((player) => {
+            var _a;
+            const pick = cardCzar.getCardPick();
+            return (((_a = player.getCardsInPlay()) === null || _a === void 0 ? void 0 : _a.filter((card) => pick === null || pick === void 0 ? void 0 : pick.includes(card)).length) === (pick === null || pick === void 0 ? void 0 : pick.length));
+        });
         this.emit(GameEvents_1.GameEvents.PICK_ENDED, {
             playerID: (_a = winningPlayer === null || winningPlayer === void 0 ? void 0 : winningPlayer.id) !== null && _a !== void 0 ? _a : null,
-            winningCard: (_b = winningPlayer === null || winningPlayer === void 0 ? void 0 : winningPlayer.getCardInPlay()) !== null && _b !== void 0 ? _b : null,
+            winningCard: (_b = winningPlayer === null || winningPlayer === void 0 ? void 0 : winningPlayer.getCardsInPlay()) !== null && _b !== void 0 ? _b : null,
         });
         if (this.playerReachedMaxPoints()) {
             this.endGame();
             return;
         }
-        this.players.forEach((player) => player.clearCardInPlay());
+        this.players.forEach((player) => player.clearCardsInPlay());
         this.emit(GameEvents_1.GameEvents.ROUND_ENDED);
         this.startTimer = setTimeout(() => this.startRound(), Game.TIMER_BETWEEN_ROUNDS);
     }
@@ -223,7 +233,7 @@ class Game {
     allPlayersPlayedCards() {
         return (this.players
             .filter(({ id }) => id !== this.currentCzarId)
-            .find((player) => !!player.getCardInPlay()) !== undefined);
+            .find((player) => !!player.getCardsInPlay()) !== undefined);
     }
     emit(event, data) {
         this.lastEvent = event;

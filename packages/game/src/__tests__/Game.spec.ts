@@ -99,6 +99,9 @@ describe("Game", () => {
       }
     });
 
+    it.todo("Should play and single card correctly");
+    it.todo("Should play and multiple cards correctly");
+
     it("Should switch to new cardCzar when the current one leaves and stop game when too few players", async () => {
       const expectedEvents = [
         GameEvents.GAME_STARTED,

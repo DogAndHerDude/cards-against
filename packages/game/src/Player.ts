@@ -60,12 +60,4 @@ export class Player {
   public addPoint() {
     this.points += 1;
   }
-
-  // TODO: Refactor this shit to instanceToPlain
-  public toPlain(): IPlainPlayer {
-    return {
-      id: this.id,
-      points: this.points,
-    };
-  }
 }

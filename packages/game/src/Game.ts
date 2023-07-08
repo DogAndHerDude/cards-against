@@ -1,4 +1,5 @@
 import { EventEmitter } from "events";
+import { instanceToPlain } from "class-transformer";
 import { GameDeck } from "./GameDeck";
 import { Player } from "./Player";
 import { IGameConfig } from "./IGameConfig";
@@ -62,7 +63,7 @@ export class Game {
 
   public getGameDetails() {
     return {
-      players: this.players?.map((player) => player.toPlain()) ?? [],
+      players: this.players?.map((player) => instanceToPlain(player)) ?? [],
     };
   }
 

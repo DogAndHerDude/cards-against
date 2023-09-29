@@ -85,9 +85,14 @@ export class SocketGateway implements OnGatewayConnection, OnGatewayDisconnect {
       try {
         const { auth } = socket.handshake;
         const userData = await this.authService.verifyJWT(auth.token);
+        const user = this.userService.getUser(userData.id);
+        const room = this.roomService.getRoomByUser(user);
 
+        room.removeUser(user);
         this.userService.removeUser(userData.id);
-      } catch {}
+      } catch (error) {
+        console.error(error);
+      }
     }
   }
 

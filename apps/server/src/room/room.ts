@@ -95,6 +95,11 @@ export class Room {
   public addUser(user: Required<User>): void {
     // TODO: Check if game in progres and add user to the game
     // TODO: Check if max player limit reached
+
+    if (this.users.has(user)) {
+      return;
+    }
+
     this.users.add(user);
     user.socket.join(this.id);
     this.server.to(this.id).emit(OutgoingRoomEvents.USER_JOINED, {

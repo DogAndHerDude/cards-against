@@ -1,9 +1,13 @@
-import type { Component } from "solid-js";
+import { Router } from "@solidjs/router";
+import { AppRouter } from "./routes/AppRouter";
+import { SocketProvider } from "./utils/SocketProvider";
 
-export const App: Component = () => {
+export function App() {
   return (
-    <div class="w-screen h-screen">
-      <h1 class="font-bold text-3xl">Sup!</h1>
-    </div>
+    <SocketProvider>
+      <Router>
+        <AppRouter />
+      </Router>
+    </SocketProvider>
   );
-};
+}

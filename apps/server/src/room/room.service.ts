@@ -26,6 +26,18 @@ export class RoomService {
     return room;
   }
 
+  public getRoomByUser(user: User) {
+    const room = Array.from(this.rooms.values()).find((entry) => {
+      return entry.users.has(user);
+    });
+
+    if (!room) {
+      throw new Error('Placehodlder room not found error.');
+    }
+
+    return room;
+  }
+
   public listRooms() {
     return Array.from(this.rooms.values()).map((room) =>
       room.getBasicDetails(),

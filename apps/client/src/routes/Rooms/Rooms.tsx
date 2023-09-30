@@ -6,7 +6,7 @@ import { useNavigate } from "@solidjs/router";
 
 export const Rooms: Component = () => {
   const navigate = useNavigate();
-  const { rooms, initRooms, addRoom } = roomStore;
+  const { rooms, initRooms, addRoom, removeRoom } = roomStore;
   const { emit, on } = useSockets();
   const onCreateRoomClick = async () => {
     const room = await emit<BasicRoom>("CREATE_ROOM");
@@ -15,19 +15,23 @@ export const Rooms: Component = () => {
     navigate(`/game/${room.id}`);
   };
   const onJoinClick = async (id: string) => {
-    await emit("JOIN_ROOM", { roomId: id });
-    navigate(`/game/${id}`);
+    const room = await emit<BasicRoom>("JOIN_ROOM", { roomId: id });
+
+    navigate(`/game/${room.id}`);
   };
 
   createRenderEffect(() => {
     emit<BasicRoom[]>("LIST_ROOMS", undefined, (payload) => {
       initRooms(payload);
     });
+  });
 
-    onMount(() => {
-      on<BasicRoom>("ROOM_CREATED", (payload) => {
-        addRoom(payload);
-      });
+  onMount(() => {
+    on<BasicRoom>("ROOM_CREATED", (payload) => {
+      addRoom(payload);
+    });
+    on<{ roomId: string }>("ROOM_CLOSED", (payload) => {
+      removeRoom(payload.roomId);
     });
   });
 

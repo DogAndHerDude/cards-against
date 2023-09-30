@@ -6,6 +6,6 @@ export class DefaultGameConfig implements IGameConfig {
     public pickTimer = 60000,
     public maxPoints = 12,
     public packs = [],
-    public maxPlayers = 12
+    public maxPlayers = 12,
   ) {}
 }

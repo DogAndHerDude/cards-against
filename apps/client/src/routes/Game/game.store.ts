@@ -1,4 +1,4 @@
-import { createRoot } from "solid-js";
+import { createRoot, createSignal } from "solid-js";
 import { BasicRoom } from "../Rooms/rooms.store";
 import { createStore } from "solid-js/store";
 import type {
@@ -9,45 +9,69 @@ import type {
 
 export type GetRoomPayload = {
   round: number;
-  players: Player[];
-} & BasicRoom;
+  players: PlayerPayload[];
+} & Omit<BasicRoom, "players">;
 
-export type Player = {
+export type PlayerPayload = {
   id: string;
   name: string;
   score: number;
 };
 
+export type Player = {
+  played?: boolean;
+} & PlayerPayload;
+
 export type GameStore = {
   round: number;
-  players: Player[];
+  players: PlayerPayload[];
   cardCzar?: string;
   blackCard?: IBlackCard;
-  cardsInPlay: IWhiteCard[];
   roundTimer?: number;
 } & Partial<Omit<BasicRoom, "players">>;
 
+export type GameStage = "ROUND_STARTED" | "PICK_STARTED" | "ROUND_ENDED";
+
 function createGameStore() {
+  const playerMap = new Map<string, Player>();
+  const [gameStage, setGameStage] = createSignal<GameStage>();
   const [cards, setCards] = createStore<IWhiteCard[]>([]);
+  const [cardsInPlay, setCardsInPlay] = createSignal<IWhiteCard[][]>([]);
   const [game, setGame] = createStore<GameStore>({
     round: 0,
-    players: [] as Player[],
-    cardsInPlay: [],
+    players: [] as PlayerPayload[],
     inProgress: false,
   });
   const initRoom = (room: GetRoomPayload) => {
+    room.players.forEach((player) => playerMap.set(player.id, player));
     setGame(() => room);
   };
-  const addPlayer = (player: Player) => {
+  const addPlayer = (player: PlayerPayload) => {
+    if (!playerMap.has(player.id)) {
+      playerMap.set(player.id, player);
+    }
+
     setGame({
       ...game,
-      players: [...game.players, { ...player, score: 0 }],
+      players: Array.from(playerMap.values()),
     });
   };
   const removePlayerById = (id: string) => {
+    playerMap.delete(id);
     setGame({
       ...game,
-      players: game.players.filter((player) => player.id !== id),
+      players: Array.from(playerMap.values()),
+    });
+  };
+  const setPlayerPlayed = (id: string) => {
+    if (playerMap.has(id)) {
+      return;
+    }
+
+    (playerMap.get(id) as Player).played = true;
+    setGame({
+      ...game,
+      players: Array.from(playerMap.values()),
     });
   };
   const setGameStarted = () => {
@@ -65,16 +89,32 @@ function createGameStore() {
       ...payload,
     });
   };
+  const setRoundEnded = () => {
+    for (const player of playerMap.values()) {
+      player.played = false;
+    }
+
+    setGame({
+      ...game,
+      players: Array.from(playerMap.values()),
+    });
+  };
 
   return {
     game,
     cards,
+    gameStage,
     initRoom,
     addPlayer,
     removePlayerById,
+    setPlayerPlayed,
     setGameStarted,
     setRoundStarted,
+    setRoundEnded,
     addCards,
+    setGameStage,
+    cardsInPlay,
+    setCardsInPlay,
   };
 }
 

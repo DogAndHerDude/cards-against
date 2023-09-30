@@ -13,7 +13,7 @@ function createSocketContext() {
     });
 
     return new Promise<void>((resolve, reject) => {
-      socket.on("error", (error: Error) => {
+      socket.on("connect_error", (error: Error) => {
         reject(error);
       });
       socket.on("connect", () => {
@@ -31,6 +31,7 @@ function createSocketContext() {
   ): Promise<T> => {
     return new Promise((resolve) => {
       socket.emit(event, data, (payload: T) => {
+        console.log(event, data, "lel");
         callback?.(payload);
         resolve(payload);
       });

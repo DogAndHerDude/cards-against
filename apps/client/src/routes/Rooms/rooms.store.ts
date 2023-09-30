@@ -30,8 +30,15 @@ function createRoomStore() {
       }),
     );
   };
+  const removeRoom = (id: string) => {
+    setRooms(
+      produce((store) => {
+        delete store[id];
+      }),
+    );
+  };
 
-  return { rooms: roomArr, initRooms, addRoom };
+  return { rooms: roomArr, initRooms, addRoom, removeRoom };
 }
 
 export const roomStore = createRoot(createRoomStore);

@@ -15,7 +15,11 @@ import { UserService } from '@/user/user.service';
 import { AuthService } from '@/auth/auth.service';
 import { RoomService } from '@/room/room.service';
 import { AuthorizedSocket } from './AuthorizedSocket';
-import { IncomingRoomEvents, OutgoingRoomEvents } from '@/room/events';
+import {
+  IncomingRoomEvents,
+  InternalRoomEvents,
+  OutgoingRoomEvents,
+} from '@/room/events';
 import { StartGameDTO } from './dto/StartGameDTO';
 import { UserNotFoundError } from '@/user/errors/UserNotFoundError';
 import { WsUserNotFoundException } from './errors/WsUserNotFoundException';
@@ -86,13 +90,12 @@ export class SocketGateway implements OnGatewayConnection, OnGatewayDisconnect {
         const { auth } = socket.handshake;
         const userData = await this.authService.verifyJWT(auth.token);
         const user = this.userService.getUser(userData.id);
-        const room = this.roomService.getRoomByUser(user);
-
-        room.removeUser(user);
+        try {
+          const room = this.roomService.getRoomByUser(user);
+          room.removeUser(user);
+        } catch {}
         this.userService.removeUser(userData.id);
-      } catch (error) {
-        console.error(error);
-      }
+      } catch {}
     }
   }
 
@@ -125,6 +128,13 @@ export class SocketGateway implements OnGatewayConnection, OnGatewayDisconnect {
       const details = room.getBasicDetails();
 
       this.server.emit(OutgoingRoomEvents.ROOM_CREATED, details);
+      // Generally I should switch to nestjs event emitter module
+      // this will let me monitor all room events this way
+      room.on(InternalRoomEvents.ROOM_CLOSED, () => {
+        this.server.emit(OutgoingRoomEvents.ROOM_CLOSED, {
+          roomId: details.id,
+        });
+      });
 
       return details;
     } catch (error) {
@@ -151,7 +161,10 @@ export class SocketGateway implements OnGatewayConnection, OnGatewayDisconnect {
       const room = this.roomService.getRoom(data.roomId);
 
       room.addUser(user as Required<User>);
+
+      return room.getRoomDetails();
     } catch (error) {
+      console.error(error);
       throw new WsException(error.message);
     }
   }

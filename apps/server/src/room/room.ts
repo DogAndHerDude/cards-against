@@ -102,8 +102,10 @@ export class Room {
 
     this.users.add(user);
     user.socket.join(this.id);
+    const userInstance = instanceToPlain(user);
+    userInstance.score = 0;
     this.server.to(this.id).emit(OutgoingRoomEvents.USER_JOINED, {
-      user: instanceToPlain(user),
+      user: userInstance,
     });
   }
 
@@ -175,9 +177,9 @@ export class Room {
       return;
     }
 
-    this.game.on(GameEvents.GAME_STARTED, () =>
-      this.server.to(this.id).emit(GameEvents.GAME_STARTED),
-    );
+    this.game.on(GameEvents.GAME_STARTED, () => {
+      this.server.to(this.id).emit(GameEvents.GAME_STARTED);
+    });
     this.game.on(GameEvents.HAND_OUT_CARDS, (data) =>
       Object.entries(data).forEach(([userId, whiteCards]) => {
         const user = Array.from(this.users.values()).find(

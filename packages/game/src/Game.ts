@@ -31,7 +31,7 @@ export class Game {
   constructor(
     private players: Array<Player>,
     private readonly config: IGameConfig,
-    private deck: GameDeck
+    private deck: GameDeck,
   ) {
     if (players.length < Game.MIN_PLAYERS) {
       throw new TooFewPlayersError(players.length, Game.MIN_PLAYERS);
@@ -42,7 +42,7 @@ export class Game {
 
   public on<T extends string = string, P = any>(
     event: T,
-    cb: (payload: P) => void
+    cb: (payload: P) => void,
   ): void {
     this.eventEmitter.on(event, cb);
   }
@@ -188,7 +188,7 @@ export class Game {
 
   private prepareNextCardCzar() {
     const prevCardCzarIndex = this.players.findIndex(
-      ({ id }) => id === this.currentCzarId
+      ({ id }) => id === this.currentCzarId,
     );
     const nextCzar = this.players[prevCardCzarIndex + 1];
 
@@ -203,7 +203,7 @@ export class Game {
     this.players.forEach((player) => {
       const playerCards = player.getCards();
       const newCards = this.deck.getWhiteCards(
-        Game.MAX_CARDS - playerCards.length
+        Game.MAX_CARDS - playerCards.length,
       );
 
       player.addCards(newCards);
@@ -214,7 +214,7 @@ export class Game {
         accumulator[player.id] = player.getCards();
 
         return accumulator;
-      }, {})
+      }, {}),
     );
   }
 
@@ -262,7 +262,7 @@ export class Game {
     });
     this.startTimer = setTimeout(
       () => this.startRound(),
-      Game.TIMER_BETWEEN_ROUNDS
+      Game.TIMER_BETWEEN_ROUNDS,
     );
   }
 
@@ -273,7 +273,7 @@ export class Game {
     if (!cardCzar) {
       this.startTimer = setTimeout(
         () => this.startRound(),
-        Game.TIMER_BETWEEN_ROUNDS
+        Game.TIMER_BETWEEN_ROUNDS,
       );
       return;
     }
@@ -301,7 +301,7 @@ export class Game {
     this.emit(GameEvents.ROUND_ENDED);
     this.startTimer = setTimeout(
       () => this.startRound(),
-      Game.TIMER_BETWEEN_ROUNDS
+      Game.TIMER_BETWEEN_ROUNDS,
     );
   }
 
@@ -322,7 +322,7 @@ export class Game {
   private playerReachedMaxPoints() {
     return (
       this.players.find(
-        (player) => player.getPoints() === this.config.maxPoints
+        (player) => player.getPoints() === this.config.maxPoints,
       ) !== undefined
     );
   }
@@ -337,7 +337,7 @@ export class Game {
 
   private emit<T extends Record<keyof T, unknown> | undefined = undefined>(
     event: GameEvents,
-    data?: T
+    data?: T,
   ) {
     this.lastEvent = event;
     this.eventEmitter.emit(event, data);

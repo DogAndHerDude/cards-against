@@ -47,35 +47,31 @@ export type GameStage = "ROUND_STARTED" | "PICK_STARTED" | "ROUND_ENDED";
 // I'm just using this until I get the gist of the structure
 //  and a general understanding of SolidJS
 function createGameStore() {
-  const playerMap = new Map<string, Player>();
   const [gameStage, setGameStage] = createSignal<GameStage>();
   const [cards, setCards] = createStore<IWhiteCard[]>([]);
   const [cardsInPlay, setCardsInPlay] = createSignal<string[][]>([]);
   const [playersPlayed, setPlayersPlayed] = createSignal<string[]>([]);
+  const [winningCards, setWinningCards] = createSignal<string[]>([]);
   const [game, setGame] = createStore<GameStore>({
     round: 0,
     players: [] as PlayerPayload[],
     inProgress: false,
   });
   const initRoom = (room: GetRoomPayload) => {
-    room.players.forEach((player) => playerMap.set(player.id, player));
     setGame(() => room);
   };
   const addPlayer = (player: PlayerPayload) => {
-    if (!playerMap.has(player.id)) {
-      playerMap.set(player.id, player);
-    }
+    const exists = game.players.some((entry) => entry.id === player.id);
 
     setGame({
       ...game,
-      players: Array.from(playerMap.values()),
+      players: exists ? game.players : [...game.players, player],
     });
   };
   const removePlayerById = (id: string) => {
-    playerMap.delete(id);
     setGame({
       ...game,
-      players: Array.from(playerMap.values()),
+      players: game.players.filter((player) => player.id !== id),
     });
   };
   const setPlayerPlayed = (id: string) => {
@@ -93,6 +89,7 @@ function createGameStore() {
     setCards(incomingCards);
   };
   const setRoundStarted = (payload: RoundStartedPayload) => {
+    setCardsInPlay([]);
     setGame({
       ...game,
       ...payload,
@@ -101,6 +98,7 @@ function createGameStore() {
   };
   const setPickStarted = (payload: PickStartedPayload) => {
     // TODO: set pick timer
+    // TODO: refactor game object to account for all kinds of timers
     setGame({
       ...game,
       roundTimer: undefined,
@@ -108,19 +106,23 @@ function createGameStore() {
     setGameStage("PICK_STARTED");
   };
   const setPickEnded = (payload: PickEndedPayload) => {
-    if (playerMap.has(payload.playerID)) {
-      (playerMap.get(payload.playerID) as Player).score += 1;
-    }
-
-    // TODO: set winning card state and display it
+    setWinningCards(payload.winningCard);
     setGame({
       ...game,
-      players: Array.from(playerMap.values()),
+      players: game.players.map((player) => {
+        if (player.id !== payload.playerID) {
+          return player;
+        }
+
+        return {
+          ...player,
+          score: player.score + 1,
+        };
+      }),
     });
   };
   const setRoundEnded = () => {
     setPlayersPlayed([]);
-    setCardsInPlay([]);
     setGameStage("ROUND_ENDED");
   };
 
@@ -129,6 +131,7 @@ function createGameStore() {
     cards,
     gameStage,
     playersPlayed,
+    winningCards,
     initRoom,
     addPlayer,
     removePlayerById,

@@ -4,6 +4,7 @@ import { BlackCard } from "./BlackCard";
 import { CardView } from "./CardView";
 import { WhiteCard } from "./WhiteCard";
 import { authStore } from "../../store/auth.store";
+import { twMerge } from "tailwind-merge";
 
 type GameViewProps = {
   onCardsPicked(cards: string[]): void;
@@ -11,7 +12,8 @@ type GameViewProps = {
 };
 
 export const GameView: Component<GameViewProps> = (props) => {
-  const { game, cards, gameStage, playersPlayed, cardsInPlay } = gameStore;
+  const { game, cards, gameStage, playersPlayed, cardsInPlay, winningCards } =
+    gameStore;
   const { auth } = authStore;
   const [hoveredSelection, setHoveredSelection] = createSignal<
     number | undefined
@@ -30,47 +32,56 @@ export const GameView: Component<GameViewProps> = (props) => {
 
         <ul class="flex gap-2">
           <For each={cardsInPlay()}>
-            {(cards, parentIndex) => (
-              <li
-                onMouseOver={() => setHoveredSelection(parentIndex())}
-                onMouseOut={() => setHoveredSelection(undefined)}
-              >
-                <For each={cards}>
-                  {(entry, index) => {
-                    const style =
-                      index() > 0
-                        ? {
-                            style: {
-                              position: "absolute" as const,
-                              left:
-                                hoveredSelection() === undefined
-                                  ? `${10 * index()}px`
-                                  : `${100 * index()}%`,
-                            },
-                          }
-                        : {};
+            {(cards, parentIndex) => {
+              const cardsWon = cards.every((card) =>
+                winningCards().includes(card),
+              );
 
-                    return (
-                      <WhiteCard
-                        {...style}
-                        class="transition-transform ease-out"
-                        value={entry}
-                        onClick={() => {
-                          if (
-                            !playerIsCardCzar() ||
-                            gameStage() !== "PICK_STARTED"
-                          ) {
-                            return;
-                          }
+              return (
+                <li
+                  onMouseOver={() => setHoveredSelection(parentIndex())}
+                  onMouseOut={() => setHoveredSelection(undefined)}
+                >
+                  <For each={cards}>
+                    {(entry, index) => {
+                      const style =
+                        index() > 0
+                          ? {
+                              style: {
+                                position: "absolute" as const,
+                                left:
+                                  hoveredSelection() === undefined
+                                    ? `${10 * index()}px`
+                                    : `${100 * index()}%`,
+                              },
+                            }
+                          : {};
 
-                          props.onCardsPicked(cards);
-                        }}
-                      />
-                    );
-                  }}
-                </For>
-              </li>
-            )}
+                      return (
+                        <WhiteCard
+                          {...style}
+                          class={twMerge(
+                            "transition-transform ease-out",
+                            cardsWon && "bg-slate-800 text-zinc-100",
+                          )}
+                          value={entry}
+                          onClick={() => {
+                            if (
+                              !playerIsCardCzar() ||
+                              gameStage() !== "PICK_STARTED"
+                            ) {
+                              return;
+                            }
+
+                            props.onCardsPicked(cards);
+                          }}
+                        />
+                      );
+                    }}
+                  </For>
+                </li>
+              );
+            }}
           </For>
         </ul>
       </div>

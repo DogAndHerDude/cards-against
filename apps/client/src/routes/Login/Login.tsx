@@ -4,6 +4,8 @@ import { http } from "../../utils/http";
 import { User, authStore } from "../../store/auth.store";
 import { useSockets } from "../../utils/SocketProvider";
 import { useNavigate } from "@solidjs/router";
+import { Button } from "../../components/Button/Button";
+import { Input } from "../../components/Input/Input";
 
 type LoginPayload = {
   name: string;
@@ -57,24 +59,24 @@ export const Login: Component = () => {
   });
 
   return (
-    <div class="w-screen h-screen flex itesm-center justify-center bg-slate-950">
-      <h1 class="text-3xl">Cards Against</h1>
+    <div class="w-screen h-screen flex flex-col items-center bg-zinc-800">
+      <h1 class="max-w-sm text-[5rem] font-bold uppercase text-slate-100 text-center leading-none mt-36">
+        Cards Against
+      </h1>
 
-      <form class="mt-10 flex flex-col gap-2 items-center" onSubmit={onSubmit}>
-        <input
+      <form class="mt-10 flex flex-col gap-6 items-center" onSubmit={onSubmit}>
+        <Input
           required
           name="name"
           placeholder="Enter your username"
           type="text"
           maxlength={25}
+          class="text-lg"
         />
 
-        <button
-          type="submit"
-          class="text-slate-400 bg-gray-50 px-3 py-2 rounded"
-        >
+        <Button invert type="submit">
           Start playing
-        </button>
+        </Button>
       </form>
     </div>
   );

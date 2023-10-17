@@ -1,20 +1,24 @@
-import { Component, splitProps } from "solid-js";
+import { splitProps, type JSX, type ParentComponent } from "solid-js";
 import { twMerge } from "tailwind-merge";
 
 type ButtonProps = {
   class?: string;
-} & ButtonHTMLAttributes<HTMLButtonElement>;
+} & JSX.ButtonHTMLAttributes<HTMLButtonElement>;
 
-export const Button: Component<ButtonProps> = (props) => {
-  const shidd = splitProps(props, [""]);
+export const Button: ParentComponent<ButtonProps> = (props) => {
+  const [local, others] = splitProps(props, ["class", "children"]);
+
   return (
     <button
       class={twMerge(
-        "px-4 py-1.5 rounded border-2 border-zinc-800 font-semibold",
+        "px-4 py-1.5 rounded border-2 border-zinc-800 text-zinc-800 font-semibold",
+        "transition-colors ease-out",
+        "hover:bg-zinc-800 hover:text-zinc-100",
+        local.class,
       )}
-      onClick={props.onStartClick}
+      {...others}
     >
-      Start game
+      {local.children}
     </button>
   );
 };

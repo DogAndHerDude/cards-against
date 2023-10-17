@@ -3,6 +3,8 @@ import { useSockets } from "../../utils/SocketProvider";
 import { BasicRoom, roomStore } from "./rooms.store";
 import { RoomsToolbar } from "./RoomsToolbar";
 import { useNavigate } from "@solidjs/router";
+import { RoomsContainer } from "./components/RoomsContainer";
+import { Button } from "../../components/Button/Button";
 
 export const Rooms: Component = () => {
   const navigate = useNavigate();
@@ -41,17 +43,34 @@ export const Rooms: Component = () => {
 
       <Show
         when={!!rooms().length}
-        fallback={<p class="text-zinc-900">No rooms found...</p>}
+        fallback={
+          <RoomsContainer class="flex flex-col items-center mt-44">
+            <p class="text-zinc-900 font-semibold text-lg">No rooms found...</p>
+            <p class="text-zinc-900 font-medium text-sm mb-4">
+              Go ahead and create one yourself!
+            </p>
+            <Button onClick={onCreateRoomClick}>Create room</Button>
+          </RoomsContainer>
+        }
       >
-        <For each={rooms()}>
-          {(room) => (
-            <div class="px-5 py-3 rounded border border-zinc-600">
-              <p>{room.id}</p>
+        <RoomsContainer class="grid grid-cols-1 lg:grid-cols-5 gap-3">
+          <For each={rooms()}>
+            {(room) => (
+              <div class="px-5 py-3 rounded border-2 border-zinc-800">
+                <h2 class="text-lg font-semibold text-zinc-800 mb-4">
+                  {room.id}
+                </h2>
 
-              <button onClick={() => onJoinClick(room.id)}>Join</button>
-            </div>
-          )}
-        </For>
+                <Button
+                  class="w-full text-center"
+                  onClick={() => onJoinClick(room.id)}
+                >
+                  Join
+                </Button>
+              </div>
+            )}
+          </For>
+        </RoomsContainer>
       </Show>
     </div>
   );

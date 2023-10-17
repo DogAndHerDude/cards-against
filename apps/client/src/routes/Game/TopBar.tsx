@@ -1,5 +1,6 @@
 import { Component, createEffect, createSignal } from "solid-js";
 import { gameStore } from "./game.store";
+import { Button } from "../../components/Button/Button";
 
 type TopBarProps = {
   onStartClick?(): void;
@@ -7,7 +8,8 @@ type TopBarProps = {
 
 export const TopBar: Component<TopBarProps> = (props) => {
   let interval: NodeJS.Timer;
-  const { game } = gameStore;
+  //const { game } = gameStore;
+  const game = { roundTimer: 60 };
   const [remainingSeconds, setRemainingSeconds] = createSignal(0);
 
   createEffect(() => {
@@ -29,12 +31,12 @@ export const TopBar: Component<TopBarProps> = (props) => {
         <p class="font-semibold text-zinc-800">{remainingSeconds()}</p>
       </div>
 
-      <button
+      <Button
         class="px-4 py-1.5 rounded border-2 border-zinc-800 font-semibold"
         onClick={props.onStartClick}
       >
         Start game
-      </button>
+      </Button>
     </div>
   );
 };

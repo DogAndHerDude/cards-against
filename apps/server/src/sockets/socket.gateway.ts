@@ -90,10 +90,16 @@ export class SocketGateway implements OnGatewayConnection, OnGatewayDisconnect {
         const { auth } = socket.handshake;
         const userData = await this.authService.verifyJWT(auth.token);
         const user = this.userService.getUser(userData.id);
+
+        // This is dumb, I really should have just returned undefined and called it a day
+        // But I'd need to refactor a few places to account for that
+        // It stays as is
+        // ... for now
         try {
           const room = this.roomService.getRoomByUser(user);
           room.removeUser(user);
         } catch {}
+
         this.userService.removeUser(userData.id);
       } catch {}
     }
@@ -131,6 +137,7 @@ export class SocketGateway implements OnGatewayConnection, OnGatewayDisconnect {
       // Generally I should switch to nestjs event emitter module
       // this will let me monitor all room events this way
       room.on(InternalRoomEvents.ROOM_CLOSED, () => {
+        this.roomService.removeRoom(details.id);
         this.server.emit(OutgoingRoomEvents.ROOM_CLOSED, {
           roomId: details.id,
         });

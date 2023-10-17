@@ -7,7 +7,13 @@ import {
   onMount,
 } from "solid-js";
 import { useSockets } from "../../utils/SocketProvider";
-import { GetRoomPayload, PlayerPayload, gameStore } from "./game.store";
+import {
+  GetRoomPayload,
+  PickEndedPayload,
+  PickStartedPayload,
+  PlayerPayload,
+  gameStore,
+} from "./game.store";
 import { IWhiteCard, RoundStartedPayload } from "@cards-against/game";
 import { PlayerSidebar } from "./PlayerSidebar";
 import { TopBar } from "./TopBar";
@@ -16,7 +22,6 @@ import { GameView } from "./GameView";
 export const Game: Component = () => {
   const {
     game,
-    cards,
     gameStage,
     initRoom,
     addPlayer,
@@ -24,6 +29,8 @@ export const Game: Component = () => {
     setPlayerPlayed,
     setGameStarted,
     setRoundStarted,
+    setPickStarted,
+    setRoundEnded,
     addCards,
     setCardsInPlay,
   } = gameStore;
@@ -39,10 +46,17 @@ export const Game: Component = () => {
       roomId: game.id as string,
     });
   };
-  const onCardPlay = (cards: IWhiteCard[]) => {
+  const onCardPlay = (cards: string[]) => {
     emit("GAME_EVENT", {
       roomId: game.id as string,
-      event: "PLAY_CARD",
+      event: "PLAYER_CARD_PLAYED",
+      cards,
+    });
+  };
+  const onCardPick = (cards: string[]) => {
+    emit("GAME_EVENT", {
+      roomId: game.id as string,
+      event: "PLAYED_CARD_PICK",
       cards,
     });
   };
@@ -71,8 +85,15 @@ export const Game: Component = () => {
     on<{ playerID: string }>("PLAYER_CARD_PLAYED", (payload) => {
       setPlayerPlayed(payload.playerID);
     });
-    on<{ playedCards: IWhiteCard[][] }>("PLAY_ENDED", (payload) => {
+    on<{ playedCards: string[][] }>("PLAY_ENDED", (payload) => {
       setCardsInPlay(payload.playedCards);
+    });
+    on<PickStartedPayload>("PICK_STARTED", (payload) => {
+      setPickStarted(payload);
+    });
+    on<PickEndedPayload>("PICK_ENDED", (payload) => {});
+    on("ROUND_ENDED", () => {
+      setRoundEnded();
     });
   });
 
@@ -85,10 +106,10 @@ export const Game: Component = () => {
       <PlayerSidebar players={game.players} onLeaveClick={onLeaveClick} />
 
       <div class="relative h-full ml-72">
-        <TopBar onStartClick={onStartClick} />
+        <TopBar stage={gameStage()} onStartClick={onStartClick} />
 
         <Show when={!game.inProgress} fallback={<p>WIP config view</p>}>
-          <GameView />
+          <GameView onCardsPlayed={onCardPlay} onCardsPicked={onCardPick} />
         </Show>
       </div>
     </div>

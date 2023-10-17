@@ -31,7 +31,6 @@ function createSocketContext() {
   ): Promise<T> => {
     return new Promise((resolve) => {
       socket.emit(event, data, (payload: T) => {
-        console.log(event, data, "lel");
         callback?.(payload);
         resolve(payload);
       });

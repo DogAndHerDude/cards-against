@@ -15,12 +15,12 @@ class Player {
     addCards(cards) {
         this.cards = [...this.cards, ...cards];
     }
-    playCard(text) {
-        const cards = this.cards.filter((card) => text.includes(card.text));
-        if (!cards.length) {
+    playCard(playedCards) {
+        this.cardsInPlay = this.cards.filter((card) => playedCards.includes(card.text));
+        if (!this.cardsInPlay.length) {
             throw new CardNotFoundError_1.CardNotFoundError();
         }
-        this.cardsInPlay = cards.map((card) => card.text);
+        this.cards = this.cards.filter((card) => !playedCards.includes(card.text));
     }
     pickCard(text) {
         this.cardPick = text;
@@ -29,14 +29,10 @@ class Player {
         return this.cardPick;
     }
     getCardsInPlay() {
-        return this.cardsInPlay;
+        var _a;
+        return (_a = this.cardsInPlay) === null || _a === void 0 ? void 0 : _a.map((card) => card.text);
     }
     clearCardsInPlay() {
-        if (!this.cardsInPlay) {
-            // TODO: throw error no card in play
-        }
-        // this.playedCards = [...this.playedCards, this.cardInPlay];
-        this.cards = this.cards.filter((card) => { var _a; return (_a = this.cardsInPlay) === null || _a === void 0 ? void 0 : _a.includes(card.text); });
         this.cardsInPlay = undefined;
     }
     getPoints() {
@@ -44,13 +40,6 @@ class Player {
     }
     addPoint() {
         this.points += 1;
-    }
-    // TODO: Refactor this shit to instanceToPlain
-    toPlain() {
-        return {
-            id: this.id,
-            points: this.points,
-        };
     }
 }
 exports.Player = Player;

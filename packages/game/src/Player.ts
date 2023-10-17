@@ -1,9 +1,8 @@
 import { IWhiteCard } from "./ICard";
 import { CardNotFoundError } from "./errors/CardNotFoundError";
-import { IPlainPlayer } from "./IPlainPlayer";
 
 export class Player {
-  private cardsInPlay?: string[];
+  private cardsInPlay?: IWhiteCard[];
   private cardPick?: string[];
   private cards: Array<IWhiteCard> = [];
   private playedCards: Array<IWhiteCard> = [];
@@ -19,14 +18,16 @@ export class Player {
     this.cards = [...this.cards, ...cards];
   }
 
-  public playCard(text: string[]) {
-    const cards = this.cards.filter((card) => text.includes(card.text));
+  public playCard(playedCards: string[]) {
+    this.cardsInPlay = this.cards.filter((card) =>
+      playedCards.includes(card.text),
+    );
 
-    if (!cards.length) {
+    if (!this.cardsInPlay.length) {
       throw new CardNotFoundError();
     }
 
-    this.cardsInPlay = cards.map((card) => card.text);
+    this.cards = this.cards.filter((card) => !playedCards.includes(card.text));
   }
 
   public pickCard(text: string[]) {
@@ -38,18 +39,10 @@ export class Player {
   }
 
   public getCardsInPlay() {
-    return this.cardsInPlay;
+    return this.cardsInPlay?.map((card) => card.text);
   }
 
   public clearCardsInPlay() {
-    if (!this.cardsInPlay) {
-      // TODO: throw error no card in play
-    }
-
-    // this.playedCards = [...this.playedCards, this.cardInPlay];
-    this.cards = this.cards.filter((card) =>
-      this.cardsInPlay?.includes(card.text)
-    );
     this.cardsInPlay = undefined;
   }
 

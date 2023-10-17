@@ -1,5 +1,4 @@
 import { IWhiteCard } from "./ICard";
-import { IPlainPlayer } from "./IPlainPlayer";
 export declare class Player {
     readonly id: string;
     private cardsInPlay?;
@@ -10,13 +9,12 @@ export declare class Player {
     constructor(id: string);
     getCards(): Array<IWhiteCard>;
     addCards(cards: Array<IWhiteCard>): void;
-    playCard(text: string[]): void;
+    playCard(playedCards: string[]): void;
     pickCard(text: string[]): void;
     getCardPick(): string[] | undefined;
     getCardsInPlay(): string[] | undefined;
     clearCardsInPlay(): void;
     getPoints(): number;
     addPoint(): void;
-    toPlain(): IPlainPlayer;
 }
 //# sourceMappingURL=Player.d.ts.map

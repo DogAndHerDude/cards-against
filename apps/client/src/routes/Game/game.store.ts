@@ -18,6 +18,15 @@ export type PlayerPayload = {
   score: number;
 };
 
+export type PickStartedPayload = {
+  pickTimer: number;
+};
+
+export type PickEndedPayload = {
+  playerID: string;
+  winningCard: string[];
+};
+
 export type Player = {
   played?: boolean;
 } & PlayerPayload;
@@ -32,11 +41,17 @@ export type GameStore = {
 
 export type GameStage = "ROUND_STARTED" | "PICK_STARTED" | "ROUND_ENDED";
 
+// HUGE NOTE!
+// This store is a big shit
+// Needs a complete rewrite
+// I'm just using this until I get the gist of the structure
+//  and a general understanding of SolidJS
 function createGameStore() {
   const playerMap = new Map<string, Player>();
   const [gameStage, setGameStage] = createSignal<GameStage>();
   const [cards, setCards] = createStore<IWhiteCard[]>([]);
-  const [cardsInPlay, setCardsInPlay] = createSignal<IWhiteCard[][]>([]);
+  const [cardsInPlay, setCardsInPlay] = createSignal<string[][]>([]);
+  const [playersPlayed, setPlayersPlayed] = createSignal<string[]>([]);
   const [game, setGame] = createStore<GameStore>({
     round: 0,
     players: [] as PlayerPayload[],
@@ -64,15 +79,7 @@ function createGameStore() {
     });
   };
   const setPlayerPlayed = (id: string) => {
-    if (playerMap.has(id)) {
-      return;
-    }
-
-    (playerMap.get(id) as Player).played = true;
-    setGame({
-      ...game,
-      players: Array.from(playerMap.values()),
-    });
+    setPlayersPlayed([...playersPlayed(), id]);
   };
   const setGameStarted = () => {
     setGame({
@@ -81,35 +88,55 @@ function createGameStore() {
     });
   };
   const addCards = (incomingCards: IWhiteCard[]) => {
-    setCards([...cards, ...incomingCards]);
+    // The server takes care of the merge
+    // we just set the new state
+    setCards(incomingCards);
   };
   const setRoundStarted = (payload: RoundStartedPayload) => {
     setGame({
       ...game,
       ...payload,
     });
+    setGameStage("ROUND_STARTED");
   };
-  const setRoundEnded = () => {
-    for (const player of playerMap.values()) {
-      player.played = false;
+  const setPickStarted = (payload: PickStartedPayload) => {
+    // TODO: set pick timer
+    setGame({
+      ...game,
+      roundTimer: undefined,
+    });
+    setGameStage("PICK_STARTED");
+  };
+  const setPickEnded = (payload: PickEndedPayload) => {
+    if (playerMap.has(payload.playerID)) {
+      (playerMap.get(payload.playerID) as Player).score += 1;
     }
 
+    // TODO: set winning card state and display it
     setGame({
       ...game,
       players: Array.from(playerMap.values()),
     });
+  };
+  const setRoundEnded = () => {
+    setPlayersPlayed([]);
+    setCardsInPlay([]);
+    setGameStage("ROUND_ENDED");
   };
 
   return {
     game,
     cards,
     gameStage,
+    playersPlayed,
     initRoom,
     addPlayer,
     removePlayerById,
     setPlayerPlayed,
     setGameStarted,
     setRoundStarted,
+    setPickStarted,
+    setPickEnded,
     setRoundEnded,
     addCards,
     setGameStage,

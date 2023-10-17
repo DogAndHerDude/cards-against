@@ -13,7 +13,7 @@ import { IBlackCard } from "./ICard";
 
 export class Game {
   public static readonly TIMER_BETWEEN_ROUNDS = 5000;
-  public static readonly MAX_CARDS = 6;
+  public static readonly MAX_CARDS = 10;
   public static readonly MIN_PLAYERS = 2;
 
   private currentCzarId?: string;
@@ -107,6 +107,10 @@ export class Game {
   }
 
   public playCard(playerID: string, cards: string[]) {
+    if (playerID === this.currentCzarId) {
+      return;
+    }
+
     const player = this.players.find(({ id }) => id === playerID);
 
     if (!player) {
@@ -211,6 +215,7 @@ export class Game {
     this.emit<HandoutCardsPayload>(
       GameEvents.HAND_OUT_CARDS,
       this.players.reduce<HandoutCardsPayload>((accumulator, player) => {
+        // Gives the whole set again, make sure to account for it on the client
         accumulator[player.id] = player.getCards();
 
         return accumulator;

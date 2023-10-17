@@ -2,6 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Game = void 0;
 const events_1 = require("events");
+const class_transformer_1 = require("class-transformer");
 const GameEvents_1 = require("./GameEvents");
 const TooFewPlayersError_1 = require("./errors/TooFewPlayersError");
 const PlayerDoesNotExistError_1 = require("./errors/PlayerDoesNotExistError");
@@ -35,7 +36,7 @@ class Game {
     getGameDetails() {
         var _a, _b;
         return {
-            players: (_b = (_a = this.players) === null || _a === void 0 ? void 0 : _a.map((player) => player.toPlain())) !== null && _b !== void 0 ? _b : [],
+            players: (_b = (_a = this.players) === null || _a === void 0 ? void 0 : _a.map((player) => (0, class_transformer_1.instanceToPlain)(player))) !== null && _b !== void 0 ? _b : [],
         };
     }
     getLastevent() {
@@ -69,6 +70,9 @@ class Game {
         }
     }
     playCard(playerID, cards) {
+        if (playerID === this.currentCzarId) {
+            return;
+        }
         const player = this.players.find(({ id }) => id === playerID);
         if (!player) {
             throw new PlayerDoesNotExistError_1.PlayerDoesNotExistError();
@@ -149,6 +153,7 @@ class Game {
             player.addCards(newCards);
         });
         this.emit(GameEvents_1.GameEvents.HAND_OUT_CARDS, this.players.reduce((accumulator, player) => {
+            // Gives the whole set again, make sure to account for it on the client
             accumulator[player.id] = player.getCards();
             return accumulator;
         }, {}));
@@ -242,5 +247,5 @@ class Game {
 }
 exports.Game = Game;
 Game.TIMER_BETWEEN_ROUNDS = 5000;
-Game.MAX_CARDS = 6;
+Game.MAX_CARDS = 10;
 Game.MIN_PLAYERS = 2;

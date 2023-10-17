@@ -7,7 +7,7 @@ export declare class Game {
     private readonly config;
     private deck;
     static readonly TIMER_BETWEEN_ROUNDS = 5000;
-    static readonly MAX_CARDS = 6;
+    static readonly MAX_CARDS = 10;
     static readonly MIN_PLAYERS = 2;
     private currentCzarId?;
     private nextCzarID?;
@@ -26,7 +26,7 @@ export declare class Game {
         topScore: number;
     };
     getGameDetails(): {
-        players: import("./IPlainPlayer").IPlainPlayer[];
+        players: Record<string, any>[];
     };
     getLastevent(): GameEvents | undefined;
     getPlayers(): Player[];

@@ -120,6 +120,8 @@ export class Room {
       this.owner = Array.from(this.users.values())[0];
     }
 
+    this.game?.removePlayer(user.id);
+
     if (!this.users.size) {
       this.emitter.emit(InternalRoomEvents.ROOM_CLOSED);
     }
@@ -214,8 +216,9 @@ export class Room {
     this.game.on(GameEvents.ROUND_ENDED, (data) =>
       this.server.to(this.id).emit(GameEvents.ROUND_ENDED, data),
     );
-    this.game.on(GameEvents.GAME_ENDED, (data) =>
-      this.server.to(this.id).emit(GameEvents.GAME_ENDED, data),
-    );
+    this.game.on(GameEvents.GAME_ENDED, (data) => {
+      this.server.to(this.id).emit(GameEvents.GAME_ENDED, data);
+      this.game = undefined;
+    });
   }
 }
